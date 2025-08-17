@@ -82,7 +82,7 @@ func boolean(spec config.VarSpec) (any, error) {
 
 	// Set default based on spec.Default
 	var selected = "false"
-	if config.AsBool(spec.Default) {
+	if asBool(spec.Default) {
 		selected = "true"
 	}
 
@@ -162,7 +162,7 @@ func fallback(specs map[string]config.VarSpec, order []string) (map[string]any, 
 
 		// Format boolean default display
 		if s.Kind == "bool" {
-			if config.AsBool(s.Default) {
+			if asBool(s.Default) {
 				defStr = "Yes"
 			} else {
 				defStr = "No"
@@ -178,7 +178,7 @@ func fallback(specs map[string]config.VarSpec, order []string) (map[string]any, 
 		var finalValue any
 		if input == "" {
 			if s.Kind == "bool" {
-				finalValue = config.AsBool(s.Default)
+				finalValue = asBool(s.Default)
 			} else {
 				finalValue = s.Default
 			}
@@ -191,7 +191,7 @@ func fallback(specs map[string]config.VarSpec, order []string) (map[string]any, 
 				case "n", "no", "false", "0":
 					finalValue = false
 				default:
-					finalValue = config.AsBool(s.Default)
+					finalValue = asBool(s.Default)
 				}
 			case "number":
 				if n, err := strconv.ParseFloat(input, 64); err == nil {
@@ -224,4 +224,23 @@ func fallback(specs map[string]config.VarSpec, order []string) (map[string]any, 
 	}
 
 	return values, nil
+}
+
+// asBool converts various types to boolean
+func asBool(v any) bool {
+	switch t := v.(type) {
+	case bool:
+		return t
+	case string:
+		switch strings.ToLower(strings.TrimSpace(t)) {
+		case "y", "yes", "true", "1":
+			return true
+		default:
+			return false
+		}
+	case float64:
+		return t != 0
+	default:
+		return false
+	}
 }

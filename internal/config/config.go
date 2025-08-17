@@ -68,6 +68,7 @@ func ParseCookiecutterJSON(b []byte) (map[string]VarSpec, []string, error) {
 		}
 		specs[k] = spec
 	}
+
 	return specs, order, nil
 }
 
@@ -75,7 +76,7 @@ func kindOf(v any) string {
 	switch t := v.(type) {
 	case string:
 		// Check if string looks like a boolean
-		if IsBooleanLikeString(t) {
+		if isBooleanLikeString(t) {
 			return "bool"
 		}
 		return "string"
@@ -88,31 +89,12 @@ func kindOf(v any) string {
 	}
 }
 
-// IsBooleanLikeString checks if a string represents a boolean value
-func IsBooleanLikeString(s string) bool {
+// isBooleanLikeString checks if a string represents a boolean value
+func isBooleanLikeString(s string) bool {
 	lower := strings.ToLower(strings.TrimSpace(s))
 	switch lower {
 	case "y", "n", "yes", "no", "true", "false", "1", "0":
 		return true
-	default:
-		return false
-	}
-}
-
-// AsBool converts various types to boolean
-func AsBool(v any) bool {
-	switch t := v.(type) {
-	case bool:
-		return t
-	case string:
-		switch strings.ToLower(strings.TrimSpace(t)) {
-		case "y", "yes", "true", "1":
-			return true
-		default:
-			return false
-		}
-	case float64:
-		return t != 0
 	default:
 		return false
 	}
@@ -123,5 +105,6 @@ func toStringSlice(vs []any) []string {
 	for _, v := range vs {
 		out = append(out, fmt.Sprint(v))
 	}
+
 	return out
 }

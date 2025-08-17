@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"embed"
 	"encoding/json"
@@ -17,6 +16,8 @@ import (
 	"text/template"
 	"unicode/utf8"
 
+	catppuccin "github.com/catppuccin/go"
+	"github.com/charmbracelet/huh"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 )
@@ -26,6 +27,27 @@ var internalFS embed.FS
 
 const (
 	cfgCookiecutter = "cookiecutter.json"
+)
+
+// Color constants
+const (
+	colorReset = "\033[0m"
+)
+
+// Catppuccin Mocha theme for beautiful CLI styling - MAXIMUM VIBRANCY
+var (
+	mocha = catppuccin.Mocha
+
+	// Main colors for prompts and UI - most vibrant Catppuccin colors
+	colorPromptSymbol = fmt.Sprintf("\033[38;2;%d;%d;%dm", mocha.Rosewater().RGB[0], mocha.Rosewater().RGB[1], mocha.Rosewater().RGB[2]) // ❯ symbol - bright rosewater pink
+	colorPromptText   = fmt.Sprintf("\033[38;2;%d;%d;%dm", mocha.Sky().RGB[0], mocha.Sky().RGB[1], mocha.Sky().RGB[2])                   // question text - vivid sky blue
+	colorMuted        = fmt.Sprintf("\033[38;2;%d;%d;%dm", mocha.Lavender().RGB[0], mocha.Lavender().RGB[1], mocha.Lavender().RGB[2])    // choices, meta - bright lavender
+	colorSubtle       = fmt.Sprintf("\033[38;2;%d;%d;%dm", mocha.Yellow().RGB[0], mocha.Yellow().RGB[1], mocha.Yellow().RGB[2])          // defaults - bright yellow
+
+	// History colors - most vibrant variety
+	colorSuccess     = fmt.Sprintf("\033[38;2;%d;%d;%dm", mocha.Green().RGB[0], mocha.Green().RGB[1], mocha.Green().RGB[2]) // ✓ checkmark - bright green
+	colorHistoryText = fmt.Sprintf("\033[38;2;%d;%d;%dm", mocha.Pink().RGB[0], mocha.Pink().RGB[1], mocha.Pink().RGB[2])    // completed questions - hot pink
+	colorAnswer      = fmt.Sprintf("\033[38;2;%d;%d;%dm", mocha.Peach().RGB[0], mocha.Peach().RGB[1], mocha.Peach().RGB[2]) // user answers - bright peach
 )
 
 type VarSpec struct {
@@ -79,7 +101,8 @@ func main() {
 		fatal("render: %v", err)
 	}
 
-	fmt.Println("✅ Done.")
+	doneColor := fmt.Sprintf("\033[38;2;%d;%d;%dm", mocha.Teal().RGB[0], mocha.Teal().RGB[1], mocha.Teal().RGB[2])
+	fmt.Printf("%s✅ Done.%s\n", doneColor, colorReset)
 }
 
 func usage() {
@@ -149,7 +172,7 @@ func isGitLike(s string) bool {
 	if strings.HasSuffix(s, ".git") {
 		return true
 	}
-	if strings.HasPrefix(s, "http://") || strings.HasPrefix(s, "https://") || strings.HasPrefix(s, "ssh://") {
+	if strings.HasPrefix(s, "https://") || strings.HasPrefix(s, "ssh://") {
 		return true
 	}
 	if strings.Contains(s, "git@") || strings.HasPrefix(s, "gh://") {
@@ -222,8 +245,12 @@ func parseCookiecutterJSON(b []byte) (map[string]VarSpec, []string, error) {
 }
 
 func kindOf(v any) string {
-	switch v.(type) {
+	switch t := v.(type) {
 	case string:
+		// Check if string looks like a boolean
+		if isBooleanLikeString(t) {
+			return "bool"
+		}
 		return "string"
 	case bool:
 		return "bool"
@@ -231,6 +258,16 @@ func kindOf(v any) string {
 		return "number"
 	default:
 		return "any"
+	}
+}
+
+func isBooleanLikeString(s string) bool {
+	lower := strings.ToLower(strings.TrimSpace(s))
+	switch lower {
+	case "y", "n", "yes", "no", "true", "false", "1", "0":
+		return true
+	default:
+		return false
 	}
 }
 
@@ -243,95 +280,230 @@ func toStringSlice(vs []any) []string {
 }
 
 func promptValues(specs map[string]VarSpec, order []string) (map[string]any, error) {
-	reader := bufio.NewReader(os.Stdin)
+	values := make(map[string]any, len(specs))
+
+	// Print header once with colorful styling
+	headerColor := fmt.Sprintf("\033[38;2;%d;%d;%dm", mocha.Maroon().RGB[0], mocha.Maroon().RGB[1], mocha.Maroon().RGB[2])
+	fmt.Printf("%s🎯 Project Configuration%s\n", headerColor, colorReset)
+	fmt.Println()
+
+	// Process each prompt individually to avoid screen clearing
+	for _, name := range order {
+		s := specs[name]
+		defStr := fmt.Sprint(s.Default)
+
+		var val any
+		var err error
+
+		if len(s.Choices) > 0 {
+			val, err = promptChoice(s, defStr)
+		} else {
+			switch s.Kind {
+			case "bool":
+				val, err = promptBool(s)
+			case "number":
+				val, err = promptNumber(s, defStr)
+			default:
+				val, err = promptString(s, defStr)
+			}
+		}
+
+		if err != nil {
+			// Fallback to simple prompts if Huh fails
+			if strings.Contains(err.Error(), "TTY") || strings.Contains(err.Error(), "tty") {
+				return promptValuesFallback(specs, order)
+			}
+			return nil, err
+		}
+
+		values[name] = val
+		fmt.Printf("%s✓%s %s%s%s: %s%v%s\n\n",
+			colorSuccess, colorReset,
+			colorHistoryText, s.Prompt, colorReset,
+			colorAnswer, val, colorReset) // Show colored question and answer
+	}
+
+	return values, nil
+}
+
+func promptChoice(spec VarSpec, defStr string) (any, error) {
+	options := make([]huh.Option[string], len(spec.Choices))
+	for i, choice := range spec.Choices {
+		options[i] = huh.NewOption(choice, choice)
+	}
+
+	var selected = defStr
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title(spec.Prompt).
+				Options(options...).
+				Value(&selected),
+		),
+	).WithAccessible(false)
+
+	err := form.Run()
+	return selected, err
+}
+
+func promptBool(spec VarSpec) (any, error) {
+	options := []huh.Option[string]{
+		huh.NewOption("Yes", "true"),
+		huh.NewOption("No", "false"),
+	}
+
+	// Set default based on spec.Default
+	var selected = "false"
+	if asBool(spec.Default) {
+		selected = "true"
+	}
+
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title(spec.Prompt).
+				Options(options...).
+				Value(&selected),
+		),
+	).WithAccessible(false)
+
+	err := form.Run()
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert back to boolean
+	return selected == "true", nil
+}
+
+func promptNumber(spec VarSpec, defStr string) (any, error) {
+	var input = defStr
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().
+				Title(spec.Prompt).
+				Value(&input).
+				Placeholder(defStr),
+		),
+	).WithAccessible(false)
+
+	err := form.Run()
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to number
+	if input == "" {
+		return spec.Default, nil
+	}
+	if n, err := strconv.ParseFloat(input, 64); err == nil {
+		return n, nil
+	}
+	return spec.Default, nil
+}
+
+func promptString(spec VarSpec, defStr string) (any, error) {
+	var input = defStr
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().
+				Title(spec.Prompt).
+				Value(&input).
+				Placeholder(defStr),
+		),
+	).WithAccessible(false)
+
+	err := form.Run()
+	if err != nil {
+		return nil, err
+	}
+
+	if input == "" {
+		return defStr, nil
+	}
+	return input, nil
+}
+
+// Simple fallback prompts when Huh can't initialize (e.g., no TTY)
+func promptValuesFallback(specs map[string]VarSpec, order []string) (map[string]any, error) {
 	values := make(map[string]any, len(specs))
 
 	for _, name := range order {
 		s := specs[name]
 		defStr := fmt.Sprint(s.Default)
 
-		var val any
+		// Format boolean default display
+		if s.Kind == "bool" {
+			if asBool(s.Default) {
+				defStr = "Yes"
+			} else {
+				defStr = "No"
+			}
+		}
 
+		fmt.Printf("%s❯%s %s%s%s", colorPromptSymbol, colorReset, colorPromptText, s.Prompt, colorReset)
 		if len(s.Choices) > 0 {
-			// Show numbered choices
-			fmt.Printf("%s (choose 1-%d) [default %s]:\n", s.Prompt, len(s.Choices), defStr)
-			for i, c := range s.Choices {
-				fmt.Printf("  %d) %s\n", i+1, c)
+			fmt.Printf(" %s(choices: %s)%s", colorMuted, strings.Join(s.Choices, ", "), colorReset)
+		} else if s.Kind == "bool" {
+			fmt.Printf(" %s(choices: Yes, No)%s", colorMuted, colorReset)
+		}
+		fmt.Printf(" %s[default: %s]%s: ", colorSubtle, defStr, colorReset)
+
+		var input string
+		_, _ = fmt.Scanln(&input)
+		input = strings.TrimSpace(input)
+
+		var finalValue any
+		if input == "" {
+			if s.Kind == "bool" {
+				finalValue = asBool(s.Default)
+			} else {
+				finalValue = s.Default
 			}
-			for {
-				fmt.Printf("> ")
-				in, _ := reader.ReadString('\n')
-				in = strings.TrimSpace(in)
-				if in == "" {
-					val = defStr
-					break
-				}
-				// allow number or exact match
-				if n, e := strconv.Atoi(in); e == nil && n >= 1 && n <= len(s.Choices) {
-					val = s.Choices[n-1]
-					break
-				}
-				// exact match
-				for _, c := range s.Choices {
-					if in == c {
-						val = c
-						goto doneChoice
-					}
-				}
-				fmt.Println("Invalid choice, try again.")
-			}
-		doneChoice:
 		} else {
 			switch s.Kind {
 			case "bool":
-				defYN := "n"
-				if asBool(s.Default) {
-					defYN = "y"
-				}
-				fmt.Printf("%s (y/n) [default %s]: ", s.Prompt, defYN)
-				in, _ := reader.ReadString('\n')
-				in = strings.TrimSpace(in)
-				if in == "" {
-					val = asBool(s.Default)
-				} else {
-					switch strings.ToLower(in) {
-					case "y", "yes", "true", "1":
-						val = true
-					case "n", "no", "false", "0":
-						val = false
-					default:
-						fmt.Println("Invalid boolean, using default.")
-						val = asBool(s.Default)
-					}
+				switch strings.ToLower(input) {
+				case "y", "yes", "true", "1":
+					finalValue = true
+				case "n", "no", "false", "0":
+					finalValue = false
+				default:
+					finalValue = asBool(s.Default)
 				}
 			case "number":
-				fmt.Printf("%s [default %s]: ", s.Prompt, defStr)
-				in, _ := reader.ReadString('\n')
-				in = strings.TrimSpace(in)
-				if in == "" {
-					val = s.Default
+				if n, err := strconv.ParseFloat(input, 64); err == nil {
+					finalValue = n
 				} else {
-					if n, err := strconv.ParseFloat(in, 64); err == nil {
-						val = n
-					} else {
-						fmt.Println("Invalid number, using default.")
-						val = s.Default
-					}
+					finalValue = s.Default
 				}
 			default:
-				fmt.Printf("%s [default %s]: ", s.Prompt, defStr)
-				in, _ := reader.ReadString('\n')
-				in = strings.TrimSpace(in)
-				if in == "" {
-					val = defStr
+				if len(s.Choices) > 0 {
+					// Check if input matches a choice
+					found := false
+					for _, choice := range s.Choices {
+						if input == choice {
+							finalValue = choice
+							found = true
+							break
+						}
+					}
+					if !found {
+						finalValue = defStr
+					}
 				} else {
-					val = in
+					finalValue = input
 				}
 			}
 		}
 
-		values[name] = val
+		values[name] = finalValue
+		fmt.Printf("%s✓%s %s%s%s: %s%v%s\n\n",
+			colorSuccess, colorReset,
+			colorHistoryText, s.Prompt, colorReset,
+			colorAnswer, finalValue, colorReset) // Show colored question and answer
 	}
+
 	return values, nil
 }
 

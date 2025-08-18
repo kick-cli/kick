@@ -1,5 +1,9 @@
 ## cutr
 
+<div align="center">
+  <img src="assets/mascot-small.png" alt="cutr mascot" width="200">
+</div>
+
 A tiny, fast project scaffolder for developers. Point it at a template (local folder or Git repo), answer a few prompts, and it renders files and directory names using Go templates. Inspired by Cookiecutter, with a minimal surface area and zero config flags.
 
 ## Highlights
@@ -285,6 +289,7 @@ Check out the [examples/](examples/) directory for complete template examples:
 - **[go-cli-cobra](examples/go-cli-cobra/)** - Modern Go CLI application with Cobra framework, hooks, and configuration
 
 Try it:
+
 ```bash
 cutr examples/go-cli-cobra ./my-awesome-cli
 ```

@@ -1,0 +1,86 @@
+name: "go-cli-cobra"
+description: "Modern Go CLI application template with Cobra framework"
+version: "1.0.0"
+author: "cutr team"
+repository: "https://github.com/yarlson/cutr"
+
+variables:
+  project_name:
+    type: string
+    prompt: "Project name"
+    default: "my-cli"
+    pattern: "^[a-z][a-z0-9-]*$"
+    help: "Must be lowercase with optional hyphens"
+
+  module_name:
+    type: string
+    prompt: "Go module name"
+    default: "github.com/user/my-cli"
+    pattern: "^[a-zA-Z0-9._/-]+$"
+    help: "Go module path (e.g., github.com/user/project)"
+
+  author_name:
+    type: string
+    prompt: "Author name"
+    default: "Your Name"
+
+  author_email:
+    type: string
+    prompt: "Author email"
+    default: "you@example.com"
+
+  description:
+    type: string
+    prompt: "Project description"
+    default: "A modern CLI application"
+
+  license:
+    type: choice
+    prompt: "License"
+    choices: ["MIT", "Apache-2.0", "GPL-3.0", "BSD-3-Clause"]
+    default: "MIT"
+
+  include_config:
+    type: boolean
+    prompt: "Include configuration file support?"
+    default: true
+
+  include_version:
+    type: boolean
+    prompt: "Include version command?"
+    default: true
+
+  go_version:
+    type: string
+    prompt: "Go version"
+    default: "1.21"
+
+hooks:
+  pre_generation:
+    - "echo '🚀 Creating Go CLI project: {{.project_name}}'"
+    - "echo 'Module: {{.module_name}}'"
+    - "echo 'Author: {{.author_name}} <{{.author_email}}>'"
+
+  post_generation:
+    - "echo '📦 Initializing Go module...'"
+    - "go mod init {{.module_name}}"
+    - "echo '⬇️  Installing dependencies...'"
+    - "go get github.com/spf13/cobra@latest"
+    - "go get github.com/spf13/viper@latest"
+    - "echo '🔧 Tidying dependencies...'"
+    - "go mod tidy"
+    - "echo '🎯 Making binary executable...'"
+    - "chmod +x scripts/build.sh"
+    - "echo '🎉 Project {{.project_name}} is ready!'"
+    - "echo ''"
+    - "echo 'Next steps:'"
+    - "echo '  cd {{.project_name}}'"
+    - "echo '  go run main.go --help'"
+    - "echo '  ./scripts/build.sh'"
+
+template:
+  ignore_patterns:
+    - "*.tmp"
+    - ".DS_Store"
+    - "*.log"
+  keep_permissions: true

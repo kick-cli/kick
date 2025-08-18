@@ -339,7 +339,23 @@ variables:
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.wantConfig, config)
+			
+			// Compare all fields except the private variableOrder field
+			assert.Equal(t, tt.wantConfig.Name, config.Name)
+			assert.Equal(t, tt.wantConfig.Description, config.Description)
+			assert.Equal(t, tt.wantConfig.Version, config.Version)
+			assert.Equal(t, tt.wantConfig.Author, config.Author)
+			assert.Equal(t, tt.wantConfig.Repository, config.Repository)
+			assert.Equal(t, tt.wantConfig.Variables, config.Variables)
+			assert.Equal(t, tt.wantConfig.Hooks, config.Hooks)
+			assert.Equal(t, tt.wantConfig.Template, config.Template)
+			
+			// Test variable order through public method - should preserve order from YAML
+			variableOrder := config.GetVariableOrder()
+			if len(config.Variables) > 0 {
+				assert.NotEmpty(t, variableOrder, "Variable order should be preserved")
+				assert.Equal(t, len(config.Variables), len(variableOrder), "Variable order should include all variables")
+			}
 		})
 	}
 }
@@ -458,15 +474,71 @@ func TestVariable_Validate(t *testing.T) {
 }
 
 func TestGetVariableOrder(t *testing.T) {
-	config := Config{
-		Variables: map[string]Variable{
-			"z_last":   {Type: "string"},
-			"a_first":  {Type: "string"},
-			"m_middle": {Type: "string"},
+	tests := []struct {
+		name     string
+		input    string
+		expected []string
+	}{
+		{
+			name: "preserves YAML definition order",
+			input: `name: "test"
+variables:
+  project_name:
+    type: string
+    default: "my-project"
+  
+  author_name:
+    type: string
+    default: "John Doe"
+  
+  description:
+    type: string
+    default: "A test project"
+  
+  enable_feature:
+    type: boolean
+    default: true
+  
+  version:
+    type: string
+    default: "1.0.0"`,
+			expected: []string{"project_name", "author_name", "description", "enable_feature", "version"},
+		},
+		{
+			name: "single variable",
+			input: `name: "test"
+variables:
+  project_name:
+    type: string
+    default: "my-project"`,
+			expected: []string{"project_name"},
+		},
+		{
+			name: "alphabetically unordered variables should preserve definition order",
+			input: `name: "test"
+variables:
+  z_last:
+    type: string
+    default: "last"
+  
+  a_first:
+    type: string  
+    default: "first"
+  
+  m_middle:
+    type: string
+    default: "middle"`,
+			expected: []string{"z_last", "a_first", "m_middle"},
 		},
 	}
 
-	order := config.GetVariableOrder()
-	expected := []string{"a_first", "m_middle", "z_last"}
-	assert.Equal(t, expected, order)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config, err := ParseCutrYAML([]byte(tt.input))
+			require.NoError(t, err)
+
+			order := config.GetVariableOrder()
+			assert.Equal(t, tt.expected, order, "Variable order should match YAML definition order")
+		})
+	}
 }

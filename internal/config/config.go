@@ -28,6 +28,9 @@ type Config struct {
 
 	// Template settings
 	Template TemplateSettings `yaml:"template,omitempty"`
+
+	// Variable order (preserved from YAML parsing)
+	variableOrder []string
 }
 
 // Variable represents a template variable definition
@@ -58,9 +61,23 @@ type TemplateSettings struct {
 func ParseCutrYAML(data []byte) (Config, error) {
 	var config Config
 
+	// First parse normally to get all the data
 	if err := yaml.Unmarshal(data, &config); err != nil {
 		return Config{}, fmt.Errorf("yaml: %w", err)
 	}
+
+	// Parse again to extract variable order
+	var rawDoc yaml.Node
+	if err := yaml.Unmarshal(data, &rawDoc); err != nil {
+		return Config{}, fmt.Errorf("yaml: %w", err)
+	}
+
+	// Extract variable order from the YAML structure
+	variableOrder, err := extractVariableOrder(&rawDoc)
+	if err != nil {
+		return Config{}, fmt.Errorf("extract variable order: %w", err)
+	}
+	config.variableOrder = variableOrder
 
 	// Validate required fields
 	if config.Name == "" {
@@ -77,8 +94,13 @@ func ParseCutrYAML(data []byte) (Config, error) {
 	return config, nil
 }
 
-// GetVariableOrder returns variable names in alphabetical order
+// GetVariableOrder returns variable names in their YAML definition order
 func (c Config) GetVariableOrder() []string {
+	if len(c.variableOrder) > 0 {
+		return c.variableOrder
+	}
+	
+	// Fallback to alphabetical order if no order was preserved
 	order := make([]string, 0, len(c.Variables))
 	for name := range c.Variables {
 		order = append(order, name)
@@ -181,4 +203,37 @@ func validateVariable(_ string, variable Variable) error {
 	}
 
 	return nil
+}
+
+// extractVariableOrder extracts the order of variables from the YAML node structure
+func extractVariableOrder(node *yaml.Node) ([]string, error) {
+	var order []string
+	
+	// Find the root document node
+	if node.Kind != yaml.DocumentNode || len(node.Content) == 0 {
+		return order, nil
+	}
+	
+	// The root content should be a mapping node
+	rootNode := node.Content[0]
+	if rootNode.Kind != yaml.MappingNode {
+		return order, nil
+	}
+	
+	// Find the "variables" key
+	for i := 0; i < len(rootNode.Content); i += 2 {
+		keyNode := rootNode.Content[i]
+		valueNode := rootNode.Content[i+1]
+		
+		if keyNode.Value == "variables" && valueNode.Kind == yaml.MappingNode {
+			// Extract variable names in order
+			for j := 0; j < len(valueNode.Content); j += 2 {
+				varKeyNode := valueNode.Content[j]
+				order = append(order, varKeyNode.Value)
+			}
+			break
+		}
+	}
+	
+	return order, nil
 }

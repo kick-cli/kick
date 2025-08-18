@@ -278,6 +278,17 @@ Produces:
   ...
 ```
 
+## Examples
+
+Check out the [examples/](examples/) directory for complete template examples:
+
+- **[go-cli-cobra](examples/go-cli-cobra/)** - Modern Go CLI application with Cobra framework, hooks, and configuration
+
+Try it:
+```bash
+cutr examples/go-cli-cobra ./my-awesome-cli
+```
+
 ## Development
 
 - **Run tests**: `go test ./...`

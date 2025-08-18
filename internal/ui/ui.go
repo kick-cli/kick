@@ -33,7 +33,7 @@ var (
 
 // PrintHeader prints a colored header message
 func PrintHeader(text string) {
-	fmt.Printf("%s%s%s\n", colorHeader, text, colorReset)
+	fmt.Printf("%s%s%s", colorHeader, text, colorReset)
 	fmt.Println()
 }
 

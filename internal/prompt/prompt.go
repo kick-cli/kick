@@ -16,7 +16,7 @@ func Values(variables map[string]config.Variable, order []string) (map[string]an
 	values := make(map[string]any, len(variables))
 
 	// Print header once with colorful styling
-	ui.PrintHeader("🎯 Project Configuration")
+	ui.PrintHeader("🎯Project Configuration")
 
 	// Process each prompt individually to avoid screen clearing
 	for _, name := range order {

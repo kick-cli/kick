@@ -26,6 +26,7 @@ func (r *Resolver) Resolve(src string) (string, func(), error) {
 		if err != nil {
 			return "", nil, err
 		}
+
 		// Best-effort shallow clone
 		_, err = git.PlainClone(tmp, false, &git.CloneOptions{
 			URL:      normalizeGitURL(src),
@@ -36,8 +37,10 @@ func (r *Resolver) Resolve(src string) (string, func(), error) {
 			if errors.Is(err, transport.ErrAuthenticationRequired) {
 				return "", func() { _ = os.RemoveAll(tmp) }, fmt.Errorf("git auth required for %s", src)
 			}
+
 			return "", func() { _ = os.RemoveAll(tmp) }, err
 		}
+
 		return tmp, func() { _ = os.RemoveAll(tmp) }, nil
 	}
 
@@ -46,9 +49,11 @@ func (r *Resolver) Resolve(src string) (string, func(), error) {
 	if err != nil {
 		return "", nil, err
 	}
+
 	if !info.IsDir() {
 		return "", nil, fmt.Errorf("template path must be a directory")
 	}
+
 	return src, nil, nil
 }
 
@@ -56,12 +61,15 @@ func isGitLike(s string) bool {
 	if strings.HasSuffix(s, ".git") {
 		return true
 	}
+
 	if strings.HasPrefix(s, "https://") || strings.HasPrefix(s, "ssh://") {
 		return true
 	}
+
 	if strings.Contains(s, "git@") || strings.HasPrefix(s, "gh://") {
 		return true
 	}
+
 	return false
 }
 
@@ -73,5 +81,6 @@ func normalizeGitURL(s string) string {
 		path := parts[0]
 		return "https://github.com/" + strings.TrimSuffix(path, "/")
 	}
+
 	return s
 }

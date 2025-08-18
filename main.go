@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/yarlson/cutr/internal/config"
+	"github.com/yarlson/cutr/internal/hooks"
 	"github.com/yarlson/cutr/internal/prompt"
 	"github.com/yarlson/cutr/internal/renderer"
 	"github.com/yarlson/cutr/internal/source"
@@ -54,11 +57,17 @@ func main() {
 	// Template data with direct variable access: .variable_name
 	data := values
 
+	// Execute pre-generation hooks
+	executeHooks(cfg.Hooks.PreGeneration, "pre-generation", templatePath, data)
+
 	// Render template tree
 	rend := renderer.New()
-	if err := rend.RenderTree(templatePath, out, data); err != nil {
+	if err := rend.RenderTreeWithSettings(templatePath, out, data, cfg.Template); err != nil {
 		fatal("render: %v", err)
 	}
+
+	// Execute post-generation hooks
+	executeHooks(cfg.Hooks.PostGeneration, "post-generation", out, data)
 
 	ui.PrintSuccess("✅ Done.")
 }
@@ -90,6 +99,28 @@ func hasHelpFlag(args []string) bool {
 		}
 	}
 	return false
+}
+
+func executeHooks(hookCommands []string, hookType, workDir string, data map[string]any) {
+	if len(hookCommands) == 0 {
+		return
+	}
+	
+	ui.PrintInfo(fmt.Sprintf("🔧 Running %s hooks...", hookType))
+	hookExecutor := hooks.New()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	
+	var err error
+	if hookType == "pre-generation" {
+		err = hookExecutor.ExecutePreGeneration(ctx, config.Hooks{PreGeneration: hookCommands}, workDir, data)
+	} else {
+		err = hookExecutor.ExecutePostGeneration(ctx, config.Hooks{PostGeneration: hookCommands}, workDir, data)
+	}
+	
+	if err != nil {
+		fatal("%s hooks: %v", hookType, err)
+	}
 }
 
 func fatal(format string, a ...any) {

@@ -1,6 +1,7 @@
 package renderer
 
 import (
+	"github.com/yarlson/cutr/internal/config"
 	"os"
 	"path/filepath"
 	"testing"
@@ -392,4 +393,184 @@ func TestRenderer_RenderTree_EdgeCases(t *testing.T) {
 		expected := "#!/bin/bash\necho 'Hello World'"
 		assert.Equal(t, expected, string(renderedContent))
 	})
+}
+
+func TestRenderer_RenderTreeWithSettings(t *testing.T) {
+	tests := []struct {
+		name         string
+		settings     config.TemplateSettings
+		setupFunc    func(t *testing.T) (srcRoot, outRoot string, data map[string]any)
+		validateFunc func(t *testing.T, outRoot string)
+		wantErr      bool
+		errContains  string
+	}{
+		{
+			name: "ignore patterns - tmp files",
+			settings: config.TemplateSettings{
+				IgnorePatterns: []string{"*.tmp", "temp_*"},
+			},
+			setupFunc: func(t *testing.T) (string, string, map[string]any) {
+				srcRoot, err := os.MkdirTemp("", "cutr-src-*")
+				require.NoError(t, err)
+				outRoot, err := os.MkdirTemp("", "cutr-out-*")
+				require.NoError(t, err)
+
+				// Create files to ignore
+				err = os.WriteFile(filepath.Join(srcRoot, "temp.tmp"), []byte("temp content"), 0644)
+				require.NoError(t, err)
+				err = os.WriteFile(filepath.Join(srcRoot, "temp_file.txt"), []byte("temp file"), 0644)
+				require.NoError(t, err)
+
+				// Create files to keep
+				err = os.WriteFile(filepath.Join(srcRoot, "keep.txt"), []byte("keep this"), 0644)
+				require.NoError(t, err)
+
+				return srcRoot, outRoot, map[string]any{"name": "test"}
+			},
+			validateFunc: func(t *testing.T, outRoot string) {
+				// Ignored files should not exist
+				_, err := os.Stat(filepath.Join(outRoot, "temp.tmp"))
+				assert.Error(t, err, "temp.tmp should be ignored")
+
+				_, err = os.Stat(filepath.Join(outRoot, "temp_file.txt"))
+				assert.Error(t, err, "temp_file.txt should be ignored")
+
+				// Kept files should exist
+				content, err := os.ReadFile(filepath.Join(outRoot, "keep.txt"))
+				require.NoError(t, err)
+				assert.Equal(t, "keep this", string(content))
+			},
+		},
+		{
+			name: "ignore patterns - nested directories",
+			settings: config.TemplateSettings{
+				IgnorePatterns: []string{"node_modules", "*.log"},
+			},
+			setupFunc: func(t *testing.T) (string, string, map[string]any) {
+				srcRoot, err := os.MkdirTemp("", "cutr-src-*")
+				require.NoError(t, err)
+				outRoot, err := os.MkdirTemp("", "cutr-out-*")
+				require.NoError(t, err)
+
+				// Create node_modules directory
+				nodeModules := filepath.Join(srcRoot, "node_modules")
+				err = os.MkdirAll(nodeModules, 0755)
+				require.NoError(t, err)
+				err = os.WriteFile(filepath.Join(nodeModules, "package.json"), []byte("{}"), 0644)
+				require.NoError(t, err)
+
+				// Create log file
+				err = os.WriteFile(filepath.Join(srcRoot, "debug.log"), []byte("log content"), 0644)
+				require.NoError(t, err)
+
+				// Create normal files
+				err = os.WriteFile(filepath.Join(srcRoot, "package.json"), []byte("{}"), 0644)
+				require.NoError(t, err)
+
+				return srcRoot, outRoot, map[string]any{"name": "test"}
+			},
+			validateFunc: func(t *testing.T, outRoot string) {
+				// node_modules should not exist
+				_, err := os.Stat(filepath.Join(outRoot, "node_modules"))
+				assert.Error(t, err, "node_modules should be ignored")
+
+				// log file should not exist
+				_, err = os.Stat(filepath.Join(outRoot, "debug.log"))
+				assert.Error(t, err, "debug.log should be ignored")
+
+				// package.json should exist
+				_, err = os.Stat(filepath.Join(outRoot, "package.json"))
+				assert.NoError(t, err, "package.json should be kept")
+			},
+		},
+		{
+			name: "keep permissions enabled",
+			settings: config.TemplateSettings{
+				KeepPermissions: true,
+			},
+			setupFunc: func(t *testing.T) (string, string, map[string]any) {
+				srcRoot, err := os.MkdirTemp("", "cutr-src-*")
+				require.NoError(t, err)
+				outRoot, err := os.MkdirTemp("", "cutr-out-*")
+				require.NoError(t, err)
+
+				// Create executable file
+				content := "#!/bin/bash\necho 'Hello {{.name}}'"
+				srcFile := filepath.Join(srcRoot, "script.sh")
+				err = os.WriteFile(srcFile, []byte(content), 0755)
+				require.NoError(t, err)
+
+				// Create readonly file
+				readonlyFile := filepath.Join(srcRoot, "readonly.txt")
+				err = os.WriteFile(readonlyFile, []byte("readonly content"), 0444)
+				require.NoError(t, err)
+
+				return srcRoot, outRoot, map[string]any{"name": "test"}
+			},
+			validateFunc: func(t *testing.T, outRoot string) {
+				// Check executable permissions preserved
+				info, err := os.Stat(filepath.Join(outRoot, "script.sh"))
+				require.NoError(t, err)
+				assert.Equal(t, os.FileMode(0755), info.Mode().Perm())
+
+				// Check readonly permissions preserved
+				info, err = os.Stat(filepath.Join(outRoot, "readonly.txt"))
+				require.NoError(t, err)
+				assert.Equal(t, os.FileMode(0444), info.Mode().Perm())
+			},
+		},
+		{
+			name: "keep permissions disabled - should use default",
+			settings: config.TemplateSettings{
+				KeepPermissions: false,
+			},
+			setupFunc: func(t *testing.T) (string, string, map[string]any) {
+				srcRoot, err := os.MkdirTemp("", "cutr-src-*")
+				require.NoError(t, err)
+				outRoot, err := os.MkdirTemp("", "cutr-out-*")
+				require.NoError(t, err)
+
+				// Create executable file
+				content := "echo 'test'"
+				srcFile := filepath.Join(srcRoot, "script.sh")
+				err = os.WriteFile(srcFile, []byte(content), 0755)
+				require.NoError(t, err)
+
+				return srcRoot, outRoot, map[string]any{"name": "test"}
+			},
+			validateFunc: func(t *testing.T, outRoot string) {
+				// Should use default permissions, not source permissions
+				info, err := os.Stat(filepath.Join(outRoot, "script.sh"))
+				require.NoError(t, err)
+				// Default file permissions are typically 0644
+				assert.Equal(t, os.FileMode(0644), info.Mode().Perm())
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			srcRoot, outRoot, data := tt.setupFunc(t)
+			defer func() {
+				_ = os.RemoveAll(srcRoot)
+				_ = os.RemoveAll(outRoot)
+			}()
+
+			renderer := New()
+			err := renderer.RenderTreeWithSettings(srcRoot, outRoot, data, tt.settings)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				if tt.errContains != "" {
+					assert.Contains(t, err.Error(), tt.errContains)
+				}
+				return
+			}
+
+			require.NoError(t, err)
+			if tt.validateFunc != nil {
+				tt.validateFunc(t, outRoot)
+			}
+		})
+	}
 }

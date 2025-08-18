@@ -59,6 +59,11 @@ func PrintPrompt(prompt string, choices []string, kind, defStr string) {
 	fmt.Printf(" %s[default: %s]%s: ", colorSubtle, defStr, colorReset)
 }
 
+// PrintInfo prints a colored info message
+func PrintInfo(text string) {
+	fmt.Printf("%s%s%s\n", colorPromptText, text, colorReset)
+}
+
 // PrintSuccess prints a colored success message
 func PrintSuccess(text string) {
 	fmt.Printf("%s%s%s\n", colorDone, text, colorReset)

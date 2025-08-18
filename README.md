@@ -8,6 +8,8 @@ A tiny, fast project scaffolder for developers. Point it at a template (local fo
 - **Interactive prompts**: string, choice, number, and boolean with defaults, choices, and basic validation hints
 - **Path templating**: both file contents and directory/file names can contain `{{...}}`
 - **Safe rendering**: binary files are copied as-is; file permissions are preserved
+- **Hooks system**: run commands before and after generation with template variable support
+- **Template settings**: ignore patterns and permission control
 - **Strict by default**: missing template variables fail the run (no silent fallbacks)
 - **No noise**: skips copying `.git` and the template config `cutr.yaml`
 
@@ -69,7 +71,7 @@ Your template is a normal folder whose root contains a `cutr.yaml` config. Every
 - Files are treated as text and rendered with Go `text/template`
 - Binary files are detected and copied as-is
 - Directory and file names can also be templates; empty results are skipped
-- Original file permissions are preserved
+- File permissions can be preserved or normalized (configurable)
 
 Example structure (template side):
 
@@ -128,22 +130,33 @@ Notes:
 - Prompts are asked in **alphabetical order** of variable names
 - Rendering uses `missingkey=error`: referencing an undefined variable fails the run
 
-Optional keys that are parsed but not executed yet (safe to include for future compatibility):
+Additional configuration options:
 
 ```yaml
 hooks:
   pre_generation:
-    - "echo 'Starting'"
+    - "echo 'Starting generation for {{.project_name}}'"
+    - "mkdir -p src"
   post_generation:
-    - "echo 'Done'"
+    - "git init"
+    - "echo 'Project {{.project_name}} is ready!'"
 
 template:
-  ignore_patterns: ["*.tmp", ".DS_Store"]
+  ignore_patterns: ["*.tmp", ".DS_Store", "node_modules"]
   keep_permissions: true
 ```
 
-- **hooks** and **template.ignore_patterns** are recognized by the config parser but currently not run/enforced by the renderer
-- **keep_permissions** matches current behavior (permissions are preserved)
+**Hooks:**
+
+- **pre_generation**: Commands executed before template rendering (in the template directory)
+- **post_generation**: Commands executed after template rendering (in the output directory)
+- Hook commands support template variables (e.g., `{{.project_name}}`)
+- Commands run with a 5-minute timeout
+
+**Template settings:**
+
+- **ignore_patterns**: Glob patterns for files/directories to skip during rendering
+- **keep_permissions**: If `true`, preserves source file permissions; if `false`, uses default permissions (0644)
 
 ## Built-in template functions
 
@@ -169,6 +182,31 @@ package {{.project_name | snake}}
 - Interactive prompts use a modern TUI
 - If a TTY is not available, cutr falls back to simple stdin prompts (press Enter to accept defaults). For booleans, common inputs like "y/yes/true/1" are accepted.
 
+## Hooks and automation
+
+Hooks let you run shell commands at key points in the generation process:
+
+- **Pre-generation hooks** run before any files are rendered (useful for setup, validation, or creating directories)
+- **Post-generation hooks** run after all files are rendered (useful for initializing git, installing dependencies, or running formatters)
+
+Hook commands support template variables and run with the same data available to your templates:
+
+```yaml
+hooks:
+  pre_generation:
+    - "echo 'Generating {{.project_name}}...'"
+    - "mkdir -p {{.project_name}}/src {{.project_name}}/tests"
+  post_generation:
+    - "cd {{.project_name}} && git init"
+    - "cd {{.project_name}} && go mod init {{.module_name}}"
+    - "echo 'Project {{.project_name}} ready!'"
+```
+
+Commands are executed with a shell (`sh -c`) in the appropriate directory:
+
+- Pre-generation hooks run in the **template directory**
+- Post-generation hooks run in the **output directory**
+
 ## Common errors
 
 - "map has no entry for key": your template references a variable that wasn’t provided; add it to `cutr.yaml` or adjust the template
@@ -178,7 +216,38 @@ package {{.project_name | snake}}
 
 ## End-to-end example
 
-Given the `cutr.yaml` above, you can use variables in names and contents:
+Here's a complete template with hooks and settings:
+
+```yaml
+name: "go-service"
+description: "Production-ready Go service template"
+version: "1.0.0"
+
+variables:
+  project_name:
+    type: string
+    prompt: "Project name"
+    default: "my-service"
+
+  module_name:
+    type: string
+    prompt: "Go module name"
+    default: "github.com/user/my-service"
+
+hooks:
+  pre_generation:
+    - "echo 'Creating Go service: {{.project_name}}'"
+  post_generation:
+    - "cd {{.project_name}} && go mod init {{.module_name}}"
+    - "cd {{.project_name}} && go mod tidy"
+    - "echo 'Service {{.project_name}} is ready!'"
+
+template:
+  ignore_patterns: ["*.tmp", ".DS_Store"]
+  keep_permissions: true
+```
+
+You can use variables in names and contents:
 
 ```
 cmd/{{.project_name}}/main.go

@@ -81,6 +81,66 @@ func (r *Renderer) RenderTree(srcRoot, outRoot string, data map[string]any) erro
 	})
 }
 
+// RenderTreeWithSettings walks the source template directory and renders all files to the output directory
+// using the provided template settings.
+func (r *Renderer) RenderTreeWithSettings(srcRoot, outRoot string, data map[string]any, settings config.TemplateSettings) error {
+	// Make sure output exists
+	if err := os.MkdirAll(outRoot, 0o755); err != nil {
+		return err
+	}
+
+	return filepath.WalkDir(srcRoot, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		rel, err := filepath.Rel(srcRoot, path)
+		if err != nil {
+			return fmt.Errorf("compute relative path: %w", err)
+		}
+		if rel == "." {
+			return nil
+		}
+
+		// Skip version control and config files
+		if r.shouldSkip(filepath.Base(path), d.IsDir()) {
+			if d.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		// Check ignore patterns
+		if r.shouldIgnoreWithSettings(rel, d.IsDir(), settings) {
+			if d.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		// Render each path segment
+		targetRel, err := r.renderPath(rel, data)
+		if err != nil {
+			return fmt.Errorf("render path %q: %w", rel, err)
+		}
+		// Skip empty results (if a segment renders to empty, drop it)
+		if targetRel == "" {
+			if d.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		targetPath := filepath.Join(outRoot, targetRel)
+
+		if d.IsDir() {
+			return os.MkdirAll(targetPath, 0o755)
+		}
+
+		// Process file with settings
+		return r.processFileWithSettings(path, targetPath, data, settings)
+	})
+}
+
 func (r *Renderer) renderPath(rel string, data map[string]any) (string, error) {
 	segs := strings.Split(rel, string(os.PathSeparator))
 	outSegs := make([]string, 0, len(segs))
@@ -301,3 +361,67 @@ func isLower(r rune) bool { return unicode.IsLower(r) }
 
 // toLowerRune converts a rune to lowercase.
 func toLowerRune(r rune) rune { return unicode.ToLower(r) }
+
+// shouldIgnoreWithSettings checks if a file should be ignored based on template settings.
+func (r *Renderer) shouldIgnoreWithSettings(relPath string, isDir bool, settings config.TemplateSettings) bool {
+	basename := filepath.Base(relPath)
+	
+	for _, pattern := range settings.IgnorePatterns {
+		// Check if pattern matches the basename
+		if matched, _ := filepath.Match(pattern, basename); matched {
+			return true
+		}
+		// Check if pattern matches the full relative path
+		if matched, _ := filepath.Match(pattern, relPath); matched {
+			return true
+		}
+		// For directories, also check if the pattern matches the directory name exactly
+		if isDir && pattern == basename {
+			return true
+		}
+	}
+	
+	return false
+}
+
+// processFileWithSettings handles copying binary files or rendering text files with template settings.
+func (r *Renderer) processFileWithSettings(srcPath, targetPath string, data map[string]any, settings config.TemplateSettings) error {
+	// Get file info for permissions
+	srcInfo, err := os.Stat(srcPath)
+	if err != nil {
+		return fmt.Errorf("stat source file: %w", err)
+	}
+	mode := srcInfo.Mode()
+
+	// Read file content
+	content, err := os.ReadFile(srcPath)
+	if err != nil {
+		return fmt.Errorf("read source file: %w", err)
+	}
+
+	// Ensure target directory exists
+	if err := os.MkdirAll(filepath.Dir(targetPath), 0o755); err != nil {
+		return fmt.Errorf("create target directory: %w", err)
+	}
+
+	// Determine file permissions
+	var targetMode os.FileMode
+	if settings.KeepPermissions {
+		targetMode = mode.Perm()
+	} else {
+		targetMode = 0644 // Default permissions
+	}
+
+	// Binary files are copied as-is, text files are rendered
+	if isBinary(content) {
+		return os.WriteFile(targetPath, content, targetMode)
+	}
+
+	// Render text file
+	rendered, err := r.renderBytes(content, data)
+	if err != nil {
+		return fmt.Errorf("render template: %w", err)
+	}
+
+	return os.WriteFile(targetPath, rendered, targetMode)
+}

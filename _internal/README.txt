@@ -1,1 +1,0 @@
-This is an internal file used by cutr for embedding resources.

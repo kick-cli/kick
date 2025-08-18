@@ -7,227 +7,466 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseCookiecutterJSON(t *testing.T) {
+func TestParseCutrYAML(t *testing.T) {
 	tests := []struct {
-		name      string
-		input     string
-		wantSpecs map[string]VarSpec
-		wantOrder []string
-		wantErr   bool
+		name          string
+		input         string
+		wantConfig    Config
+		wantErr       bool
+		errorContains string
 	}{
-		// String variables
+		// Basic template configuration
 		{
-			name:  "simple string variable",
-			input: `{"project_name": "my-project"}`,
-			wantSpecs: map[string]VarSpec{
-				"project_name": {
-					Name: "project_name", Prompt: "project_name", Default: "my-project", Kind: "string",
+			name: "minimal template config",
+			input: `name: "simple-template"
+description: "A simple template"
+version: "1.0.0"
+
+variables:
+  project_name:
+    type: string
+    prompt: "Project name"
+    default: "my-project"`,
+			wantConfig: Config{
+				Name:        "simple-template",
+				Description: "A simple template",
+				Version:     "1.0.0",
+				Variables: map[string]Variable{
+					"project_name": {
+						Type:    "string",
+						Prompt:  "Project name",
+						Default: "my-project",
+					},
 				},
 			},
-			wantOrder: []string{"project_name"},
 		},
 		{
-			name:  "multiple strings sorted alphabetically",
-			input: `{"z_last": "last", "a_first": "first", "m_middle": "middle"}`,
-			wantSpecs: map[string]VarSpec{
-				"a_first":  {Name: "a_first", Prompt: "a_first", Default: "first", Kind: "string"},
-				"m_middle": {Name: "m_middle", Prompt: "m_middle", Default: "middle", Kind: "string"},
-				"z_last":   {Name: "z_last", Prompt: "z_last", Default: "last", Kind: "string"},
+			name: "complete template metadata",
+			input: `name: "go-service-template"
+description: "Production-ready Go microservice template"
+version: "1.2.0"
+author: "John Doe <john@example.com>"
+repository: "https://github.com/john/template"
+
+variables:
+  project_name:
+    type: string
+    prompt: "Project name"
+    default: "my-service"`,
+			wantConfig: Config{
+				Name:        "go-service-template",
+				Description: "Production-ready Go microservice template",
+				Version:     "1.2.0",
+				Author:      "John Doe <john@example.com>",
+				Repository:  "https://github.com/john/template",
+				Variables: map[string]Variable{
+					"project_name": {
+						Type:    "string",
+						Prompt:  "Project name",
+						Default: "my-service",
+					},
+				},
 			},
-			wantOrder: []string{"a_first", "m_middle", "z_last"},
-		},
-		{
-			name:  "regular strings not boolean-like",
-			input: `{"name": "john", "description": "some text"}`,
-			wantSpecs: map[string]VarSpec{
-				"description": {Name: "description", Prompt: "description", Default: "some text", Kind: "string"},
-				"name":        {Name: "name", Prompt: "name", Default: "john", Kind: "string"},
-			},
-			wantOrder: []string{"description", "name"},
 		},
 
-		// Boolean-like string variables
+		// String variables
 		{
-			name:  "boolean-like string y",
-			input: `{"use_feature": "y"}`,
-			wantSpecs: map[string]VarSpec{
-				"use_feature": {Name: "use_feature", Prompt: "use_feature", Default: "y", Kind: "bool"},
+			name: "string variable with validation",
+			input: `name: "test"
+variables:
+  project_name:
+    type: string
+    prompt: "Project name"
+    default: "my-project"
+    pattern: "^[a-z][a-z0-9-]*$"
+    help: "Must be lowercase"`,
+			wantConfig: Config{
+				Name: "test",
+				Variables: map[string]Variable{
+					"project_name": {
+						Type:    "string",
+						Prompt:  "Project name",
+						Default: "my-project",
+						Pattern: "^[a-z][a-z0-9-]*$",
+						Help:    "Must be lowercase",
+					},
+				},
 			},
-			wantOrder: []string{"use_feature"},
-		},
-		{
-			name:  "boolean-like string yes",
-			input: `{"enable_logs": "yes"}`,
-			wantSpecs: map[string]VarSpec{
-				"enable_logs": {Name: "enable_logs", Prompt: "enable_logs", Default: "yes", Kind: "bool"},
-			},
-			wantOrder: []string{"enable_logs"},
-		},
-		{
-			name:  "boolean-like string true",
-			input: `{"debug_mode": "true"}`,
-			wantSpecs: map[string]VarSpec{
-				"debug_mode": {Name: "debug_mode", Prompt: "debug_mode", Default: "true", Kind: "bool"},
-			},
-			wantOrder: []string{"debug_mode"},
-		},
-		{
-			name:  "boolean-like string n",
-			input: `{"disable_cache": "n"}`,
-			wantSpecs: map[string]VarSpec{
-				"disable_cache": {Name: "disable_cache", Prompt: "disable_cache", Default: "n", Kind: "bool"},
-			},
-			wantOrder: []string{"disable_cache"},
-		},
-		{
-			name:  "boolean-like mixed case",
-			input: `{"production": "False"}`,
-			wantSpecs: map[string]VarSpec{
-				"production": {Name: "production", Prompt: "production", Default: "False", Kind: "bool"},
-			},
-			wantOrder: []string{"production"},
-		},
-		{
-			name:  "boolean-like numeric strings",
-			input: `{"enabled": "1", "disabled": "0"}`,
-			wantSpecs: map[string]VarSpec{
-				"disabled": {Name: "disabled", Prompt: "disabled", Default: "0", Kind: "bool"},
-				"enabled":  {Name: "enabled", Prompt: "enabled", Default: "1", Kind: "bool"},
-			},
-			wantOrder: []string{"disabled", "enabled"},
-		},
-
-		// Actual boolean variables
-		{
-			name:  "JSON boolean values",
-			input: `{"enabled": true, "disabled": false}`,
-			wantSpecs: map[string]VarSpec{
-				"disabled": {Name: "disabled", Prompt: "disabled", Default: false, Kind: "bool"},
-				"enabled":  {Name: "enabled", Prompt: "enabled", Default: true, Kind: "bool"},
-			},
-			wantOrder: []string{"disabled", "enabled"},
-		},
-
-		// Number variables
-		{
-			name:  "integer and float numbers",
-			input: `{"port": 8080, "timeout": 30.5}`,
-			wantSpecs: map[string]VarSpec{
-				"port":    {Name: "port", Prompt: "port", Default: float64(8080), Kind: "number"},
-				"timeout": {Name: "timeout", Prompt: "timeout", Default: 30.5, Kind: "number"},
-			},
-			wantOrder: []string{"port", "timeout"},
 		},
 
 		// Choice variables
 		{
-			name:  "choice array with default",
-			input: `{"database": ["mysql", "postgres", "sqlite"]}`,
-			wantSpecs: map[string]VarSpec{
-				"database": {
-					Name: "database", Prompt: "database", Default: "mysql", Kind: "choice",
-					Choices: []string{"mysql", "postgres", "sqlite"},
+			name: "choice variable",
+			input: `name: "test"
+variables:
+  database:
+    type: choice
+    prompt: "Database type"
+    choices: ["postgres", "mysql", "sqlite"]
+    default: "postgres"
+    help: "Choose your database"`,
+			wantConfig: Config{
+				Name: "test",
+				Variables: map[string]Variable{
+					"database": {
+						Type:    "choice",
+						Prompt:  "Database type",
+						Choices: []string{"postgres", "mysql", "sqlite"},
+						Default: "postgres",
+						Help:    "Choose your database",
+					},
 				},
 			},
-			wantOrder: []string{"database"},
-		},
-		{
-			name:  "empty choice array",
-			input: `{"empty_choices": []}`,
-			wantSpecs: map[string]VarSpec{
-				"empty_choices": {
-					Name: "empty_choices", Prompt: "empty_choices", Kind: "choice",
-					Choices: []string{},
-				},
-			},
-			wantOrder: []string{"empty_choices"},
 		},
 
-		// Complex object variables
+		// Boolean variables
 		{
-			name:  "object with all fields",
-			input: `{"version": {"default": "1.0.0", "prompt": "Application version", "choices": ["1.0.0", "2.0.0"]}}`,
-			wantSpecs: map[string]VarSpec{
-				"version": {
-					Name: "version", Prompt: "Application version", Default: "1.0.0", Kind: "choice",
-					Choices: []string{"1.0.0", "2.0.0"},
+			name: "boolean variable",
+			input: `name: "test"
+variables:
+  use_docker:
+    type: boolean
+    prompt: "Include Docker?"
+    default: true`,
+			wantConfig: Config{
+				Name: "test",
+				Variables: map[string]Variable{
+					"use_docker": {
+						Type:    "boolean",
+						Prompt:  "Include Docker?",
+						Default: true,
+					},
 				},
 			},
-			wantOrder: []string{"version"},
-		},
-		{
-			name:  "object with custom prompt only",
-			input: `{"description": {"default": "My app", "prompt": "Enter app description"}}`,
-			wantSpecs: map[string]VarSpec{
-				"description": {Name: "description", Prompt: "Enter app description", Default: "My app", Kind: "string"},
-			},
-			wantOrder: []string{"description"},
-		},
-		{
-			name:  "object with boolean-like default",
-			input: `{"feature": {"default": "y", "prompt": "Enable feature?"}}`,
-			wantSpecs: map[string]VarSpec{
-				"feature": {Name: "feature", Prompt: "Enable feature?", Default: "y", Kind: "bool"},
-			},
-			wantOrder: []string{"feature"},
-		},
-		{
-			name:  "object with choices but no default",
-			input: `{"env": {"choices": ["dev", "prod"], "prompt": "Environment"}}`,
-			wantSpecs: map[string]VarSpec{
-				"env": {
-					Name: "env", Prompt: "Environment", Kind: "choice",
-					Choices: []string{"dev", "prod"},
-				},
-			},
-			wantOrder: []string{"env"},
 		},
 
-		// Edge cases
+		// Number variables
 		{
-			name:  "empty object defaults to any",
-			input: `{"unknown": {}}`,
-			wantSpecs: map[string]VarSpec{
-				"unknown": {Name: "unknown", Prompt: "unknown", Kind: "any"},
+			name: "number variable with constraints",
+			input: `name: "test"
+variables:
+  port:
+    type: number
+    prompt: "HTTP port"
+    default: 8080
+    min: 1024
+    max: 65535`,
+			wantConfig: Config{
+				Name: "test",
+				Variables: map[string]Variable{
+					"port": {
+						Type:    "number",
+						Prompt:  "HTTP port",
+						Default: 8080,
+						Min:     1024,
+						Max:     65535,
+					},
+				},
 			},
-			wantOrder: []string{"unknown"},
 		},
+
+		// Multiple variables
 		{
-			name:  "null value defaults to any",
-			input: `{"complex": null}`,
-			wantSpecs: map[string]VarSpec{
-				"complex": {Name: "complex", Prompt: "complex", Kind: "any"},
+			name: "multiple variables of different types",
+			input: `name: "multi-var-template"
+variables:
+  project_name:
+    type: string
+    prompt: "Project name"
+    default: "my-app"
+  
+  database:
+    type: choice
+    prompt: "Database"
+    choices: ["postgres", "mysql"]
+    default: "postgres"
+  
+  enable_auth:
+    type: boolean
+    prompt: "Enable authentication?"
+    default: false
+  
+  port:
+    type: number
+    prompt: "Port"
+    default: 3000`,
+			wantConfig: Config{
+				Name: "multi-var-template",
+				Variables: map[string]Variable{
+					"project_name": {
+						Type:    "string",
+						Prompt:  "Project name",
+						Default: "my-app",
+					},
+					"database": {
+						Type:    "choice",
+						Prompt:  "Database",
+						Choices: []string{"postgres", "mysql"},
+						Default: "postgres",
+					},
+					"enable_auth": {
+						Type:    "boolean",
+						Prompt:  "Enable authentication?",
+						Default: false,
+					},
+					"port": {
+						Type:    "number",
+						Prompt:  "Port",
+						Default: 3000,
+					},
+				},
 			},
-			wantOrder: []string{"complex"},
 		},
+
+		// Hooks configuration
 		{
-			name:      "empty JSON object",
-			input:     `{}`,
-			wantSpecs: map[string]VarSpec{},
-			wantOrder: []string{},
+			name: "template with hooks",
+			input: `name: "template-with-hooks"
+variables:
+  project_name:
+    type: string
+    default: "my-project"
+
+hooks:
+  pre_generation:
+    - "echo 'Starting generation'"
+    - "scripts/validate.sh"
+  post_generation:
+    - "go mod init {{.project_name}}"
+    - "echo 'Done!'"`,
+			wantConfig: Config{
+				Name: "template-with-hooks",
+				Variables: map[string]Variable{
+					"project_name": {
+						Type:    "string",
+						Default: "my-project",
+					},
+				},
+				Hooks: Hooks{
+					PreGeneration:  []string{"echo 'Starting generation'", "scripts/validate.sh"},
+					PostGeneration: []string{"go mod init {{.project_name}}", "echo 'Done!'"},
+				},
+			},
+		},
+
+		// Template settings
+		{
+			name: "template with settings",
+			input: `name: "template-with-settings"
+variables:
+  name:
+    type: string
+    default: "test"
+
+template:
+  ignore_patterns:
+    - "*.tmp"
+    - ".DS_Store"
+  keep_permissions: true`,
+			wantConfig: Config{
+				Name: "template-with-settings",
+				Variables: map[string]Variable{
+					"name": {
+						Type:    "string",
+						Default: "test",
+					},
+				},
+				Template: TemplateSettings{
+					IgnorePatterns:  []string{"*.tmp", ".DS_Store"},
+					KeepPermissions: true,
+				},
+			},
 		},
 
 		// Error cases
 		{
-			name:    "invalid JSON",
-			input:   `{"invalid": json}`,
-			wantErr: true,
+			name:          "invalid YAML",
+			input:         `name: "test"\ninvalid: yaml: content`,
+			wantErr:       true,
+			errorContains: "yaml:",
+		},
+		{
+			name: "missing required name",
+			input: `description: "Missing name"
+variables:
+  test:
+    type: string`,
+			wantErr:       true,
+			errorContains: "name is required",
+		},
+		{
+			name: "invalid variable type",
+			input: `name: "test"
+variables:
+  test:
+    type: "invalid_type"`,
+			wantErr:       true,
+			errorContains: "invalid variable type",
+		},
+		{
+			name: "choice variable without choices",
+			input: `name: "test"
+variables:
+  test:
+    type: choice
+    prompt: "Choose"`,
+			wantErr:       true,
+			errorContains: "choices required for choice type",
+		},
+		{
+			name: "number variable with invalid min/max",
+			input: `name: "test"
+variables:
+  test:
+    type: number
+    min: 100
+    max: 50`,
+			wantErr:       true,
+			errorContains: "min cannot be greater than max",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			specs, order, err := ParseCookiecutterJSON([]byte(tt.input))
+			config, err := ParseCutrYAML([]byte(tt.input))
 
 			if tt.wantErr {
 				require.Error(t, err)
-				assert.Contains(t, err.Error(), "invalid character")
+				if tt.errorContains != "" {
+					assert.Contains(t, err.Error(), tt.errorContains)
+				}
 				return
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.wantSpecs, specs)
-			assert.Equal(t, tt.wantOrder, order)
+			assert.Equal(t, tt.wantConfig, config)
 		})
 	}
+}
+
+func TestVariable_Validate(t *testing.T) {
+	tests := []struct {
+		name     string
+		variable Variable
+		value    any
+		wantErr  bool
+	}{
+		// String validation
+		{
+			name: "valid string",
+			variable: Variable{
+				Type:    "string",
+				Pattern: "^[a-z]+$",
+			},
+			value: "hello",
+		},
+		{
+			name: "invalid string pattern",
+			variable: Variable{
+				Type:    "string",
+				Pattern: "^[a-z]+$",
+			},
+			value:   "Hello123",
+			wantErr: true,
+		},
+		{
+			name: "string without pattern",
+			variable: Variable{
+				Type: "string",
+			},
+			value: "any-string-works",
+		},
+
+		// Choice validation
+		{
+			name: "valid choice",
+			variable: Variable{
+				Type:    "choice",
+				Choices: []string{"postgres", "mysql", "sqlite"},
+			},
+			value: "postgres",
+		},
+		{
+			name: "invalid choice",
+			variable: Variable{
+				Type:    "choice",
+				Choices: []string{"postgres", "mysql", "sqlite"},
+			},
+			value:   "oracle",
+			wantErr: true,
+		},
+
+		// Number validation
+		{
+			name: "valid number in range",
+			variable: Variable{
+				Type: "number",
+				Min:  1024,
+				Max:  65535,
+			},
+			value: 8080,
+		},
+		{
+			name: "number below min",
+			variable: Variable{
+				Type: "number",
+				Min:  1024,
+				Max:  65535,
+			},
+			value:   500,
+			wantErr: true,
+		},
+		{
+			name: "number above max",
+			variable: Variable{
+				Type: "number",
+				Min:  1024,
+				Max:  65535,
+			},
+			value:   70000,
+			wantErr: true,
+		},
+
+		// Boolean validation
+		{
+			name: "valid boolean true",
+			variable: Variable{
+				Type: "boolean",
+			},
+			value: true,
+		},
+		{
+			name: "valid boolean false",
+			variable: Variable{
+				Type: "boolean",
+			},
+			value: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.variable.Validate(tt.value)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestGetVariableOrder(t *testing.T) {
+	config := Config{
+		Variables: map[string]Variable{
+			"z_last":   {Type: "string"},
+			"a_first":  {Type: "string"},
+			"m_middle": {Type: "string"},
+		},
+	}
+
+	order := config.GetVariableOrder()
+	expected := []string{"a_first", "m_middle", "z_last"}
+	assert.Equal(t, expected, order)
 }

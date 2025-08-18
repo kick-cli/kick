@@ -1,7 +1,6 @@
 package main
 
 import (
-	"embed"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,9 +11,6 @@ import (
 	"github.com/yarlson/cutr/internal/template"
 	"github.com/yarlson/cutr/internal/ui"
 )
-
-//go:embed _internal/README.txt
-var internalFS embed.FS
 
 func main() {
 	if len(os.Args) < 2 || hasHelpFlag(os.Args[1:]) {
@@ -38,25 +34,25 @@ func main() {
 	}
 
 	// Parse configuration
-	cfgPath := filepath.Join(templatePath, config.CookiecutterJSON)
+	cfgPath := filepath.Join(templatePath, config.CutrYAML)
 	cfgData, err := os.ReadFile(cfgPath)
 	if err != nil {
 		fatal("read %s: %v", cfgPath, err)
 	}
 
-	specs, order, err := config.ParseCookiecutterJSON(cfgData)
+	cfg, err := config.ParseCutrYAML(cfgData)
 	if err != nil {
 		fatal("parse config: %v", err)
 	}
 
 	// Prompt for values
-	values, err := prompt.Values(specs, order)
+	values, err := prompt.Values(cfg.Variables, cfg.GetVariableOrder())
 	if err != nil {
 		fatal("prompt: %v", err)
 	}
 
-	// Root data for templates roughly mimics cookiecutter: .cookiecutter.<var>
-	data := map[string]any{"cookiecutter": values}
+	// Template data with direct variable access: .variable_name
+	data := values
 
 	// Render template tree
 	renderer := template.New()
@@ -83,8 +79,7 @@ Example:
   cutr gh://my-org/service-template ./my-service
   cutr /path/to/template ./out
 
-`, config.CookiecutterJSON)
-	_ = internalFS // just to ensure embed keeps something; not required for runtime
+`, config.CutrYAML)
 }
 
 func hasHelpFlag(args []string) bool {

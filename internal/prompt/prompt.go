@@ -12,51 +12,51 @@ import (
 )
 
 // Values prompts for and collects user input for template variables
-func Values(specs map[string]config.VarSpec, order []string) (map[string]any, error) {
-	values := make(map[string]any, len(specs))
+func Values(variables map[string]config.Variable, order []string) (map[string]any, error) {
+	values := make(map[string]any, len(variables))
 
 	// Print header once with colorful styling
 	ui.PrintHeader("🎯 Project Configuration")
 
 	// Process each prompt individually to avoid screen clearing
 	for _, name := range order {
-		s := specs[name]
-		defStr := fmt.Sprint(s.Default)
+		v := variables[name]
+		defStr := fmt.Sprint(v.Default)
 
 		var val any
 		var err error
 
-		if len(s.Choices) > 0 {
-			val, err = choice(s, defStr)
+		if len(v.Choices) > 0 {
+			val, err = choice(v, defStr)
 		} else {
-			switch s.Kind {
-			case "bool":
-				val, err = boolean(s)
+			switch v.Type {
+			case "boolean":
+				val, err = boolean(v)
 			case "number":
-				val, err = number(s, defStr)
+				val, err = number(v, defStr)
 			default:
-				val, err = text(s, defStr)
+				val, err = text(v, defStr)
 			}
 		}
 
 		if err != nil {
 			// Fallback to simple prompts if Huh fails
 			if strings.Contains(err.Error(), "TTY") || strings.Contains(err.Error(), "tty") {
-				return fallback(specs, order)
+				return fallback(variables, order)
 			}
 			return nil, err
 		}
 
 		values[name] = val
-		ui.PrintHistory(s.Prompt, val)
+		ui.PrintHistory(v.Prompt, val)
 	}
 
 	return values, nil
 }
 
-func choice(spec config.VarSpec, defStr string) (any, error) {
-	options := make([]huh.Option[string], len(spec.Choices))
-	for i, choice := range spec.Choices {
+func choice(variable config.Variable, defStr string) (any, error) {
+	options := make([]huh.Option[string], len(variable.Choices))
+	for i, choice := range variable.Choices {
 		options[i] = huh.NewOption(choice, choice)
 	}
 
@@ -64,7 +64,7 @@ func choice(spec config.VarSpec, defStr string) (any, error) {
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewSelect[string]().
-				Title(spec.Prompt).
+				Title(variable.Prompt).
 				Options(options...).
 				Value(&selected),
 		),
@@ -74,22 +74,22 @@ func choice(spec config.VarSpec, defStr string) (any, error) {
 	return selected, err
 }
 
-func boolean(spec config.VarSpec) (any, error) {
+func boolean(variable config.Variable) (any, error) {
 	options := []huh.Option[string]{
 		huh.NewOption("Yes", "true"),
 		huh.NewOption("No", "false"),
 	}
 
-	// Set default based on spec.Default
+	// Set default based on variable.Default
 	var selected = "false"
-	if asBool(spec.Default) {
+	if asBool(variable.Default) {
 		selected = "true"
 	}
 
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewSelect[string]().
-				Title(spec.Prompt).
+				Title(variable.Prompt).
 				Options(options...).
 				Value(&selected),
 		),
@@ -104,12 +104,12 @@ func boolean(spec config.VarSpec) (any, error) {
 	return selected == "true", nil
 }
 
-func number(spec config.VarSpec, defStr string) (any, error) {
+func number(variable config.Variable, defStr string) (any, error) {
 	var input = defStr
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
-				Title(spec.Prompt).
+				Title(variable.Prompt).
 				Value(&input).
 				Placeholder(defStr),
 		),
@@ -122,20 +122,20 @@ func number(spec config.VarSpec, defStr string) (any, error) {
 
 	// Convert to number
 	if input == "" {
-		return spec.Default, nil
+		return variable.Default, nil
 	}
 	if n, err := strconv.ParseFloat(input, 64); err == nil {
 		return n, nil
 	}
-	return spec.Default, nil
+	return variable.Default, nil
 }
 
-func text(spec config.VarSpec, defStr string) (any, error) {
+func text(variable config.Variable, defStr string) (any, error) {
 	var input = defStr
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
-				Title(spec.Prompt).
+				Title(variable.Prompt).
 				Value(&input).
 				Placeholder(defStr),
 		),
@@ -153,23 +153,23 @@ func text(spec config.VarSpec, defStr string) (any, error) {
 }
 
 // fallback provides simple prompts when Huh can't initialize (e.g., no TTY)
-func fallback(specs map[string]config.VarSpec, order []string) (map[string]any, error) {
-	values := make(map[string]any, len(specs))
+func fallback(variables map[string]config.Variable, order []string) (map[string]any, error) {
+	values := make(map[string]any, len(variables))
 
 	for _, name := range order {
-		s := specs[name]
-		defStr := fmt.Sprint(s.Default)
+		v := variables[name]
+		defStr := fmt.Sprint(v.Default)
 
 		// Format boolean default display
-		if s.Kind == "bool" {
-			if asBool(s.Default) {
+		if v.Type == "boolean" {
+			if asBool(v.Default) {
 				defStr = "Yes"
 			} else {
 				defStr = "No"
 			}
 		}
 
-		ui.PrintPrompt(s.Prompt, s.Choices, s.Kind, defStr)
+		ui.PrintPrompt(v.Prompt, v.Choices, v.Type, defStr)
 
 		var input string
 		_, _ = fmt.Scanln(&input)
@@ -177,33 +177,33 @@ func fallback(specs map[string]config.VarSpec, order []string) (map[string]any, 
 
 		var finalValue any
 		if input == "" {
-			if s.Kind == "bool" {
-				finalValue = asBool(s.Default)
+			if v.Type == "boolean" {
+				finalValue = asBool(v.Default)
 			} else {
-				finalValue = s.Default
+				finalValue = v.Default
 			}
 		} else {
-			switch s.Kind {
-			case "bool":
+			switch v.Type {
+			case "boolean":
 				switch strings.ToLower(input) {
 				case "y", "yes", "true", "1":
 					finalValue = true
 				case "n", "no", "false", "0":
 					finalValue = false
 				default:
-					finalValue = asBool(s.Default)
+					finalValue = asBool(v.Default)
 				}
 			case "number":
 				if n, err := strconv.ParseFloat(input, 64); err == nil {
 					finalValue = n
 				} else {
-					finalValue = s.Default
+					finalValue = v.Default
 				}
 			default:
-				if len(s.Choices) > 0 {
+				if len(v.Choices) > 0 {
 					// Check if input matches a choice
 					found := false
-					for _, choice := range s.Choices {
+					for _, choice := range v.Choices {
 						if input == choice {
 							finalValue = choice
 							found = true
@@ -220,7 +220,7 @@ func fallback(specs map[string]config.VarSpec, order []string) (map[string]any, 
 		}
 
 		values[name] = finalValue
-		ui.PrintHistory(s.Prompt, finalValue)
+		ui.PrintHistory(v.Prompt, finalValue)
 	}
 
 	return values, nil

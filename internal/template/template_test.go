@@ -35,9 +35,7 @@ func TestRenderer_RenderTree(t *testing.T) {
 				require.NoError(t, err)
 
 				data := map[string]any{
-					"cookiecutter": map[string]any{
-						"project_name": "test-project",
-					},
+					"project_name": "test-project",
 				}
 				return srcRoot, outRoot, data
 			},
@@ -57,15 +55,13 @@ func TestRenderer_RenderTree(t *testing.T) {
 				require.NoError(t, err)
 
 				// Create a simple template file
-				content := "Project: {{.cookiecutter.project_name}}\nAuthor: {{.cookiecutter.author}}"
+				content := "Project: {{.project_name}}\nAuthor: {{.author}}"
 				err = os.WriteFile(filepath.Join(srcRoot, "README.md"), []byte(content), 0644)
 				require.NoError(t, err)
 
 				data := map[string]any{
-					"cookiecutter": map[string]any{
-						"project_name": "MyProject",
-						"author":       "John Doe",
-					},
+					"project_name": "MyProject",
+					"author":       "John Doe",
 				}
 				return srcRoot, outRoot, data
 			},
@@ -85,19 +81,17 @@ func TestRenderer_RenderTree(t *testing.T) {
 				require.NoError(t, err)
 
 				// Create nested directory structure
-				subDir := filepath.Join(srcRoot, "{{.cookiecutter.project_name}}")
+				subDir := filepath.Join(srcRoot, "{{.project_name}}")
 				err = os.MkdirAll(subDir, 0755)
 				require.NoError(t, err)
 
 				// Create file in subdirectory
-				content := "Package: {{.cookiecutter.project_name}}"
+				content := "Package: {{.project_name}}"
 				err = os.WriteFile(filepath.Join(subDir, "main.go"), []byte(content), 0644)
 				require.NoError(t, err)
 
 				data := map[string]any{
-					"cookiecutter": map[string]any{
-						"project_name": "awesome-app",
-					},
+					"project_name": "awesome-app",
 				}
 				return srcRoot, outRoot, data
 			},
@@ -128,9 +122,7 @@ func TestRenderer_RenderTree(t *testing.T) {
 				require.NoError(t, err)
 
 				data := map[string]any{
-					"cookiecutter": map[string]any{
-						"project_name": "test",
-					},
+					"project_name": "test",
 				}
 				return srcRoot, outRoot, data
 			},
@@ -151,19 +143,17 @@ func TestRenderer_RenderTree(t *testing.T) {
 				require.NoError(t, err)
 
 				// Create template using various functions
-				content := `Snake: {{.cookiecutter.name | snake}}
-Kebab: {{.cookiecutter.name | kebab}}
-Camel: {{.cookiecutter.name | camel}}
-Pascal: {{.cookiecutter.name | pascal}}
-Trim: "{{.cookiecutter.padded | trim}}"`
+				content := `Snake: {{.name | snake}}
+Kebab: {{.name | kebab}}
+Camel: {{.name | camel}}
+Pascal: {{.name | pascal}}
+Trim: "{{.padded | trim}}"`
 				err = os.WriteFile(filepath.Join(srcRoot, "functions.txt"), []byte(content), 0644)
 				require.NoError(t, err)
 
 				data := map[string]any{
-					"cookiecutter": map[string]any{
-						"name":   "My Project Name",
-						"padded": "  spaced text  ",
-					},
+					"name":   "My Project Name",
+					"padded": "  spaced text  ",
 				}
 				return srcRoot, outRoot, data
 			},
@@ -180,21 +170,21 @@ Trim: "spaced text"`
 			},
 		},
 		{
-			name: "skip git and cookiecutter files",
+			name: "skip git and cutr files",
 			setupFunc: func(t *testing.T) (string, string, map[string]any) {
 				srcRoot, err := os.MkdirTemp("", "cutr-src-*")
 				require.NoError(t, err)
 				outRoot, err := os.MkdirTemp("", "cutr-out-*")
 				require.NoError(t, err)
 
-				// Create .git directory and cookiecutter.json
+				// Create .git directory and cutr.yaml
 				gitDir := filepath.Join(srcRoot, ".git")
 				err = os.MkdirAll(gitDir, 0755)
 				require.NoError(t, err)
 				err = os.WriteFile(filepath.Join(gitDir, "config"), []byte("git config"), 0644)
 				require.NoError(t, err)
 
-				err = os.WriteFile(filepath.Join(srcRoot, "cookiecutter.json"), []byte(`{"name": "test"}`), 0644)
+				err = os.WriteFile(filepath.Join(srcRoot, "cutr.yaml"), []byte(`name: "test"`), 0644)
 				require.NoError(t, err)
 
 				// Create normal file
@@ -202,9 +192,7 @@ Trim: "spaced text"`
 				require.NoError(t, err)
 
 				data := map[string]any{
-					"cookiecutter": map[string]any{
-						"name": "test",
-					},
+					"name": "test",
 				}
 				return srcRoot, outRoot, data
 			},
@@ -213,8 +201,8 @@ Trim: "spaced text"`
 				_, err := os.Stat(filepath.Join(outRoot, ".git"))
 				assert.Error(t, err)
 
-				// cookiecutter.json should not exist
-				_, err = os.Stat(filepath.Join(outRoot, "cookiecutter.json"))
+				// cutr.yaml should not exist
+				_, err = os.Stat(filepath.Join(outRoot, "cutr.yaml"))
 				assert.Error(t, err)
 
 				// Normal file should exist
@@ -232,9 +220,7 @@ Trim: "spaced text"`
 				require.NoError(t, err)
 
 				data := map[string]any{
-					"cookiecutter": map[string]any{
-						"name": "test",
-					},
+					"name": "test",
 				}
 				return "/non/existent/path", outRoot, data
 			},
@@ -250,14 +236,12 @@ Trim: "spaced text"`
 				require.NoError(t, err)
 
 				// Create file with invalid template syntax
-				content := "{{.cookiecutter.name" // Missing closing braces
+				content := "{{.name" // Missing closing braces
 				err = os.WriteFile(filepath.Join(srcRoot, "invalid.txt"), []byte(content), 0644)
 				require.NoError(t, err)
 
 				data := map[string]any{
-					"cookiecutter": map[string]any{
-						"name": "test",
-					},
+					"name": "test",
 				}
 				return srcRoot, outRoot, data
 			},
@@ -273,14 +257,12 @@ Trim: "spaced text"`
 				require.NoError(t, err)
 
 				// Create file referencing non-existent variable
-				content := "Name: {{.cookiecutter.nonexistent}}"
+				content := "Name: {{.nonexistent}}"
 				err = os.WriteFile(filepath.Join(srcRoot, "missing.txt"), []byte(content), 0644)
 				require.NoError(t, err)
 
 				data := map[string]any{
-					"cookiecutter": map[string]any{
-						"name": "test",
-					},
+					"name": "test",
 				}
 				return srcRoot, outRoot, data
 			},
@@ -298,9 +280,7 @@ Trim: "spaced text"`
 				require.NoError(t, err)
 
 				data := map[string]any{
-					"cookiecutter": map[string]any{
-						"name": "test",
-					},
+					"name": "test",
 				}
 				return srcRoot, "/dev/null/invalid", data // Invalid output path
 			},
@@ -361,14 +341,12 @@ func TestRenderer_RenderTree_EdgeCases(t *testing.T) {
 		defer func() { _ = os.RemoveAll(outRoot) }()
 
 		// Create directory that renders to empty (should be skipped)
-		emptyDir := filepath.Join(srcRoot, "{{.cookiecutter.empty}}")
+		emptyDir := filepath.Join(srcRoot, "{{.empty}}")
 		err = os.MkdirAll(emptyDir, 0755)
 		require.NoError(t, err)
 
 		data := map[string]any{
-			"cookiecutter": map[string]any{
-				"empty": "", // Will render directory name to empty
-			},
+			"empty": "", // Will render directory name to empty
 		}
 
 		err = renderer.RenderTree(srcRoot, outRoot, data)
@@ -390,15 +368,13 @@ func TestRenderer_RenderTree_EdgeCases(t *testing.T) {
 		defer func() { _ = os.RemoveAll(outRoot) }()
 
 		// Create executable file
-		content := "#!/bin/bash\necho 'Hello {{.cookiecutter.name}}'"
+		content := "#!/bin/bash\necho 'Hello {{.name}}'"
 		srcFile := filepath.Join(srcRoot, "script.sh")
 		err = os.WriteFile(srcFile, []byte(content), 0755)
 		require.NoError(t, err)
 
 		data := map[string]any{
-			"cookiecutter": map[string]any{
-				"name": "World",
-			},
+			"name": "World",
 		}
 
 		err = renderer.RenderTree(srcRoot, outRoot, data)

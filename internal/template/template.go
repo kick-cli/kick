@@ -42,7 +42,7 @@ func (r *Renderer) RenderTree(srcRoot, outRoot string, data map[string]any) erro
 
 		// Skip self files
 		base := filepath.Base(path)
-		if base == ".git" || base == config.CookiecutterJSON {
+		if base == ".git" || base == config.CutrYAML {
 			if d.IsDir() {
 				return filepath.SkipDir
 			}

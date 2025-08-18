@@ -39,7 +39,7 @@ func PrintHeader(text string) {
 
 // PrintHistory displays a completed question and answer in color
 func PrintHistory(prompt string, answer any) {
-	fmt.Printf("%s✓%s %s%s%s: %s%v%s\n\n",
+	fmt.Printf("%s✓%s %s%s%s: %s%v%s\n",
 		colorSuccess, colorReset,
 		colorHistoryText, prompt, colorReset,
 		colorAnswer, answer, colorReset,

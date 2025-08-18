@@ -15,19 +15,19 @@ import (
 
 func TestExecutor_ExecutePreGeneration(t *testing.T) {
 	tests := []struct {
-		name        string
-		hooks       config.Hooks
-		workDir     string
-		data        map[string]any
-		wantErr     bool
-		errContains string
-		setupFunc   func(t *testing.T, workDir string)
+		name         string
+		hooks        config.Hooks
+		workDir      string
+		data         map[string]any
+		wantErr      bool
+		errContains  string
+		setupFunc    func(t *testing.T, workDir string)
 		validateFunc func(t *testing.T, workDir string)
 	}{
 		{
-			name: "empty hooks",
+			name:  "empty hooks",
 			hooks: config.Hooks{},
-			data: map[string]any{"name": "test"},
+			data:  map[string]any{"name": "test"},
 		},
 		{
 			name: "single echo command",
@@ -138,19 +138,19 @@ func TestExecutor_ExecutePreGeneration(t *testing.T) {
 
 func TestExecutor_ExecutePostGeneration(t *testing.T) {
 	tests := []struct {
-		name        string
-		hooks       config.Hooks
-		workDir     string
-		data        map[string]any
-		wantErr     bool
-		errContains string
-		setupFunc   func(t *testing.T, workDir string)
+		name         string
+		hooks        config.Hooks
+		workDir      string
+		data         map[string]any
+		wantErr      bool
+		errContains  string
+		setupFunc    func(t *testing.T, workDir string)
 		validateFunc func(t *testing.T, workDir string)
 	}{
 		{
-			name: "empty hooks",
+			name:  "empty hooks",
 			hooks: config.Hooks{},
-			data: map[string]any{"name": "test"},
+			data:  map[string]any{"name": "test"},
 		},
 		{
 			name: "git init command",

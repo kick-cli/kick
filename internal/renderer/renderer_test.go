@@ -1,10 +1,11 @@
 package renderer
 
 import (
-	"github.com/yarlson/cutr/internal/config"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/yarlson/cutr/internal/config"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

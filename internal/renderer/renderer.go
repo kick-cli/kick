@@ -365,7 +365,7 @@ func toLowerRune(r rune) rune { return unicode.ToLower(r) }
 // shouldIgnoreWithSettings checks if a file should be ignored based on template settings.
 func (r *Renderer) shouldIgnoreWithSettings(relPath string, isDir bool, settings config.TemplateSettings) bool {
 	basename := filepath.Base(relPath)
-	
+
 	for _, pattern := range settings.IgnorePatterns {
 		// Check if pattern matches the basename
 		if matched, _ := filepath.Match(pattern, basename); matched {
@@ -380,7 +380,7 @@ func (r *Renderer) shouldIgnoreWithSettings(relPath string, isDir bool, settings
 			return true
 		}
 	}
-	
+
 	return false
 }
 

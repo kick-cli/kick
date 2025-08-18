@@ -339,7 +339,7 @@ variables:
 			}
 
 			require.NoError(t, err)
-			
+
 			// Compare all fields except the private variableOrder field
 			assert.Equal(t, tt.wantConfig.Name, config.Name)
 			assert.Equal(t, tt.wantConfig.Description, config.Description)
@@ -349,7 +349,7 @@ variables:
 			assert.Equal(t, tt.wantConfig.Variables, config.Variables)
 			assert.Equal(t, tt.wantConfig.Hooks, config.Hooks)
 			assert.Equal(t, tt.wantConfig.Template, config.Template)
-			
+
 			// Test variable order through public method - should preserve order from YAML
 			variableOrder := config.GetVariableOrder()
 			if len(config.Variables) > 0 {

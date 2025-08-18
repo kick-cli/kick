@@ -99,7 +99,7 @@ func (c Config) GetVariableOrder() []string {
 	if len(c.variableOrder) > 0 {
 		return c.variableOrder
 	}
-	
+
 	// Fallback to alphabetical order if no order was preserved
 	order := make([]string, 0, len(c.Variables))
 	for name := range c.Variables {
@@ -208,23 +208,23 @@ func validateVariable(_ string, variable Variable) error {
 // extractVariableOrder extracts the order of variables from the YAML node structure
 func extractVariableOrder(node *yaml.Node) ([]string, error) {
 	var order []string
-	
+
 	// Find the root document node
 	if node.Kind != yaml.DocumentNode || len(node.Content) == 0 {
 		return order, nil
 	}
-	
+
 	// The root content should be a mapping node
 	rootNode := node.Content[0]
 	if rootNode.Kind != yaml.MappingNode {
 		return order, nil
 	}
-	
+
 	// Find the "variables" key
 	for i := 0; i < len(rootNode.Content); i += 2 {
 		keyNode := rootNode.Content[i]
 		valueNode := rootNode.Content[i+1]
-		
+
 		if keyNode.Value == "variables" && valueNode.Kind == yaml.MappingNode {
 			// Extract variable names in order
 			for j := 0; j < len(valueNode.Content); j += 2 {
@@ -234,6 +234,6 @@ func extractVariableOrder(node *yaml.Node) ([]string, error) {
 			break
 		}
 	}
-	
+
 	return order, nil
 }

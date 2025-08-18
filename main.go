@@ -105,19 +105,19 @@ func executeHooks(hookCommands []string, hookType, workDir string, data map[stri
 	if len(hookCommands) == 0 {
 		return
 	}
-	
+
 	ui.PrintInfo(fmt.Sprintf("🔧 Running %s hooks...", hookType))
 	hookExecutor := hooks.New()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
-	
+
 	var err error
 	if hookType == "pre-generation" {
 		err = hookExecutor.ExecutePreGeneration(ctx, config.Hooks{PreGeneration: hookCommands}, workDir, data)
 	} else {
 		err = hookExecutor.ExecutePostGeneration(ctx, config.Hooks{PostGeneration: hookCommands}, workDir, data)
 	}
-	
+
 	if err != nil {
 		fatal("%s hooks: %v", hookType, err)
 	}

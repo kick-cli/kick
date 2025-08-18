@@ -291,3 +291,7 @@ Produces:
 - Uses familiar Go templates and adds practical string helpers
 
 Related: Cookiecutter popularized this workflow; cutr keeps the spirit but pares it down for Go-first teams.
+
+## License
+
+[MIT](LICENSE)

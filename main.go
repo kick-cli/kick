@@ -7,8 +7,8 @@ import (
 
 	"github.com/yarlson/cutr/internal/config"
 	"github.com/yarlson/cutr/internal/prompt"
+	"github.com/yarlson/cutr/internal/renderer"
 	"github.com/yarlson/cutr/internal/source"
-	"github.com/yarlson/cutr/internal/template"
 	"github.com/yarlson/cutr/internal/ui"
 )
 
@@ -55,8 +55,8 @@ func main() {
 	data := values
 
 	// Render template tree
-	renderer := template.New()
-	if err := renderer.RenderTree(templatePath, out, data); err != nil {
+	rend := renderer.New()
+	if err := rend.RenderTree(templatePath, out, data); err != nil {
 		fatal("render: %v", err)
 	}
 

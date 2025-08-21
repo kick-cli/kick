@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/yarlson/cutr/internal/config"
@@ -90,7 +91,7 @@ func (g *Generator) Generate(opts Options) error {
 	}
 
 	// Success message
-	prompts.Outro("🎉 Template generated successfully!", prompts.MessageOptions{Output: g.term.Writer})
+	prompts.Outro("✓ Project scaffolded", prompts.MessageOptions{Output: g.term.Writer})
 	return nil
 }
 
@@ -116,8 +117,14 @@ func (g *Generator) executeHooks(hookCommands []string, hookType, workDir string
 		return nil
 	}
 
-	message := fmt.Sprintf("🔧 Running %s hooks...", hookType)
-	return g.progressHandler.ShowProgress(message, func() error {
+	message := fmt.Sprintf("⚡ Executing %s hooks", hookType)
+	// Capitalize first letter of hook type for display
+	displayType := strings.ReplaceAll(hookType, "-", " ")
+	if len(displayType) > 0 {
+		displayType = strings.ToUpper(string(displayType[0])) + displayType[1:]
+	}
+	successMessage := fmt.Sprintf("%s hooks executed", displayType)
+	return g.progressHandler.ShowProgress(message, successMessage, func() error {
 		hookExecutor := hooks.New()
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer cancel()
@@ -132,7 +139,7 @@ func (g *Generator) executeHooks(hookCommands []string, hookType, workDir string
 
 // generateFiles renders the template tree with progress display
 func (g *Generator) generateFiles(templatePath, outputDir string, data map[string]any, settings config.TemplateSettings) error {
-	return g.progressHandler.ShowProgress("🎨 Generating files...", func() error {
+	return g.progressHandler.ShowProgress("📁 Rendering template files", "Template rendering complete", func() error {
 		rend := renderer.New()
 		return rend.RenderTreeWithSettings(templatePath, outputDir, data, settings)
 	})

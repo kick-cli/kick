@@ -26,8 +26,8 @@ func New(term *terminal.Terminal) *Collector {
 func (c *Collector) CollectValues(variables map[string]config.Variable, order []string) (map[string]any, error) {
 	values := make(map[string]any, len(variables))
 
-	// Beautiful intro message
-	prompts.Intro("🎯 Project Configuration", prompts.MessageOptions{Output: c.term.Writer})
+	// Project scaffolding intro
+	prompts.Intro("🏗️  Project Scaffolding", prompts.MessageOptions{Output: c.term.Writer})
 
 	// Process each variable in order
 	for _, name := range order {
@@ -57,7 +57,7 @@ func (c *Collector) CollectValues(variables map[string]config.Variable, order []
 
 		// Check for cancellation
 		if core.IsCancel(result) {
-			prompts.Cancel("Operation cancelled.", prompts.MessageOptions{Output: c.term.Writer})
+			prompts.Cancel("Generation aborted", prompts.MessageOptions{Output: c.term.Writer})
 			return nil, fmt.Errorf("user cancelled")
 		}
 
@@ -122,7 +122,7 @@ func (c *Collector) promptNumber(variable config.Variable, defStr string) (any, 
 				return nil // Allow empty input to use default
 			}
 			if _, err := strconv.ParseFloat(input, 64); err != nil {
-				return fmt.Errorf("please enter a valid number")
+				return fmt.Errorf("invalid numeric value")
 			}
 			return nil
 		},
@@ -154,13 +154,13 @@ func (c *Collector) promptText(variable config.Variable, defStr string) (any, er
 			}
 			matched, err := regexp.MatchString(variable.Pattern, input)
 			if err != nil {
-				return fmt.Errorf("invalid pattern: %v", err)
+				return fmt.Errorf("pattern validation error: %v", err)
 			}
 			if !matched {
 				if variable.Help != "" {
 					return fmt.Errorf("%s", variable.Help)
 				}
-				return fmt.Errorf("input does not match required pattern")
+				return fmt.Errorf("value does not match pattern: %s", variable.Pattern)
 			}
 			return nil
 		}

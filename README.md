@@ -1,47 +1,49 @@
-## cutr
+# cutr
 
 <div align="center">
   <img src="assets/mascot-small.png" alt="cutr mascot" width="200">
 </div>
 
-A tiny, fast project scaffolder for developers. Point it at a template (local folder or Git repo), answer a few prompts, and it renders files and directory names using Go templates. Inspired by Cookiecutter, with a minimal surface area and zero config flags.
+**Fast, minimal project scaffolder for developers** – Point it at a template, answer prompts, get a working project.
 
-## Highlights
+## Why cutr?
 
-- **Simple sources**: local directory, any `https://` or `ssh://` Git URL, anything ending with `.git`, or `gh://owner/repo` shorthand
-- **Interactive prompts**: string, choice, number, and boolean with defaults, choices, and basic validation hints
-- **Path templating**: both file contents and directory/file names can contain `{{...}}`
-- **Safe rendering**: binary files are copied as-is; file permissions are preserved
-- **Hooks system**: run commands before and after generation with template variable support
-- **Template settings**: ignore patterns and permission control
-- **Strict by default**: missing template variables fail the run (no silent fallbacks)
-- **No noise**: skips copying `.git` and the template config `cutr.yaml`
+Setting up new projects shouldn't involve copying boilerplate, hunting for templates, or manually replacing placeholder text. cutr solves this by:
 
-## Install
+- **Zero configuration required** – Just run it on any template directory or Git repo
+- **Interactive prompts** – Guided setup with validation, defaults, and help text
+- **Template everything** – File contents, names, and directory structures
+- **Automation built-in** – Pre/post hooks for dependency installation and setup
+- **Developer-focused** – Built for speed and simplicity, not feature bloat
 
-- **With Go (recommended)**
+## Features
+
+- **Flexible sources**: Local directories, Git URLs (`https://`, `ssh://`, `gh://owner/repo`)
+- **Rich prompts**: String, choice, number, boolean with validation and defaults
+- **Template engine**: Go templates in file contents and paths (`{{.variable}}`)
+- **Hooks system**: Run commands before/after generation with access to variables
+- **Smart handling**: Binary files copied as-is, permissions preserved
+- **Safe by default**: Missing template variables cause failures (no silent errors)
+- **Clean output**: Skips `.git`, `cutr.yaml`, and configurable ignore patterns
+
+## Installation
+
+**Go install (recommended):**
 
 ```bash
 go install github.com/yarlson/cutr@latest
 ```
 
-- **From source**
+**From source:**
 
 ```bash
 git clone https://github.com/yarlson/cutr
 cd cutr
 go build -o cutr
-# optional: move onto PATH
-mv ./cutr /usr/local/bin/
+sudo mv cutr /usr/local/bin/  # optional: add to PATH
 ```
 
-- **Run without installing**
-
-```bash
-go run . <template> [output_dir]
-```
-
-Requires Go 1.24 or newer.
+**Requirements:** Go 1.24+
 
 ## Usage
 
@@ -49,265 +51,200 @@ Requires Go 1.24 or newer.
 cutr <template> [output_dir]
 ```
 
-- **template**: local path, Git URL, `.git` URL, or `gh://owner/repo`
-- **output_dir**: where to render the project (defaults to current directory `.`)
-
-Examples:
+### Basic Examples
 
 ```bash
-# Local template folder → render into ./my-app
-cutr ./path/to/template ./my-app
+# Use a local template directory
+cutr ./my-template ./new-project
 
-# Public Git repo (HTTPS)
-cutr https://github.com/your-org/service-template.git ./svc
-
-# SSH URL
-cutr git@github.com:your-org/service-template.git ./svc
+# Clone and use a Git repository
+cutr https://github.com/user/template ./new-project
 
 # GitHub shorthand
-cutr gh://your-org/service-template ./svc
+cutr gh://user/template ./new-project
+
+# Output to current directory (default)
+cutr ./template
 ```
 
-## Template layout
+### Interactive Flow
 
-Your template is a normal folder whose root contains a `cutr.yaml` config. Everything except `.git` and `cutr.yaml` is processed.
+```bash
+$ cutr examples/go-cli-cobra ./my-cli
 
-- Files are treated as text and rendered with Go `text/template`
-- Binary files are detected and copied as-is
-- Directory and file names can also be templates; empty results are skipped
-- File permissions can be preserved or normalized (configurable)
+🏗️  Project Scaffolding
 
-Example structure (template side):
+◇  Project name
+│  my-awesome-cli
 
+◇  Go module name
+│  github.com/myuser/my-awesome-cli
+
+◇  Author name
+│  John Developer
+
+# ... more prompts based on cutr.yaml ...
+
+◇  Pre generation hooks executed
+
+◇  Template rendering complete
+
+◇  Post generation hooks executed
+
+✓  Project scaffolded
 ```
-my-template/
-  cutr.yaml
-  {{.project_name}}/
-    README.md
-    cmd/{{.project_name}}/main.go
-    Makefile
-```
 
-## cutr.yaml reference
+## Template Configuration
 
-Minimal example:
+Templates use a `cutr.yaml` file to define variables, validation, and hooks:
 
 ```yaml
-name: "go-service"
-description: "Production-ready Go service template"
+name: "my-template"
+description: "Example project template"
 version: "1.0.0"
 
 variables:
   project_name:
     type: string
     prompt: "Project name"
-    default: "my-service"
+    default: "my-project"
+    pattern: "^[a-z][a-z0-9-]*$"
+    help: "Lowercase with optional hyphens"
 
-  database:
+  language:
     type: choice
-    prompt: "Database"
-    choices: [postgres, mysql]
-    default: postgres
+    prompt: "Programming language"
+    choices: ["Go", "Python", "JavaScript"]
+    default: "Go"
+
+  port:
+    type: number
+    prompt: "Server port"
+    default: 8080
 
   enable_auth:
     type: boolean
     prompt: "Enable authentication?"
     default: false
 
-  port:
-    type: number
-    prompt: "HTTP port"
-    default: 8080
-    min: 1024
-    max: 65535
-```
-
-Supported variable types:
-
-- **string**: optional `prompt`, `default`, `pattern`, `help`
-- **choice**: `choices` (required), optional `prompt`, `default`, `help`
-- **number**: optional `prompt`, `default`, `min`, `max`
-- **boolean**: optional `prompt`, `default`
-
-Notes:
-
-- Prompts are asked in **alphabetical order** of variable names
-- Rendering uses `missingkey=error`: referencing an undefined variable fails the run
-
-Additional configuration options:
-
-```yaml
 hooks:
   pre_generation:
-    - "echo 'Starting generation for {{.project_name}}'"
-    - "mkdir -p src"
+    - "echo 'Setting up {{.project_name}}...'"
+
   post_generation:
+    - "npm install"
     - "git init"
-    - "echo 'Project {{.project_name}} is ready!'"
+    - "echo 'Project ready!'"
 
 template:
-  ignore_patterns: ["*.tmp", ".DS_Store", "node_modules"]
+  ignore_patterns:
+    - "*.tmp"
+    - ".DS_Store"
   keep_permissions: true
 ```
 
-**Hooks:**
+### Variable Types
 
-- **pre_generation**: Commands executed before template rendering (in the template directory)
-- **post_generation**: Commands executed after template rendering (in the output directory)
-- Hook commands support template variables (e.g., `{{.project_name}}`)
-- Commands run with a 5-minute timeout
+- **`string`** - Text input with optional regex pattern validation
+- **`choice`** - Select from predefined options
+- **`number`** - Numeric input with validation
+- **`boolean`** - Yes/No confirmation
 
-**Template settings:**
+### Template Syntax
 
-- **ignore_patterns**: Glob patterns for files/directories to skip during rendering
-- **keep_permissions**: If `true`, preserves source file permissions; if `false`, uses default permissions (0644)
+Use Go template syntax in file contents and names:
 
-## Built-in template functions
-
-You can use these in file contents and path segments:
-
-- **upper(s)**, **lower(s)**, **title(s)**
-- **trim(s)**
-- **snake(s)** → `my_project_name`
-- **kebab(s)** → `my-project-name`
-- **camel(s)** → `myProjectName`
-- **pascal(s)** → `MyProjectName`
-- **replace(s, old, new)**
-
-Example:
-
-```gotemplate
-Service: {{.project_name | title}}
-package {{.project_name | snake}}
-```
-
-## Prompts and non-TTY environments
-
-- Interactive prompts use a modern TUI
-- If a TTY is not available, cutr falls back to simple stdin prompts (press Enter to accept defaults). For booleans, common inputs like "y/yes/true/1" are accepted.
-
-## Hooks and automation
-
-Hooks let you run shell commands at key points in the generation process:
-
-- **Pre-generation hooks** run before any files are rendered (useful for setup, validation, or creating directories)
-- **Post-generation hooks** run after all files are rendered (useful for initializing git, installing dependencies, or running formatters)
-
-Hook commands support template variables and run with the same data available to your templates:
-
-```yaml
-hooks:
-  pre_generation:
-    - "echo 'Generating {{.project_name}}...'"
-    - "mkdir -p {{.project_name}}/src {{.project_name}}/tests"
-  post_generation:
-    - "cd {{.project_name}} && git init"
-    - "cd {{.project_name}} && go mod init {{.module_name}}"
-    - "echo 'Project {{.project_name}} ready!'"
-```
-
-Commands are executed with a shell (`sh -c`) in the appropriate directory:
-
-- Pre-generation hooks run in the **template directory**
-- Post-generation hooks run in the **output directory**
-
-## Common errors
-
-- "map has no entry for key": your template references a variable that wasn’t provided; add it to `cutr.yaml` or adjust the template
-- Template parse errors (e.g., unmatched `{{`): fix the syntax in the template file
-- "template path must be a directory": the source path must be a folder (not a single file)
-- Git clone errors: ensure the repo exists and you have access (private repos require auth)
-
-## End-to-end example
-
-Here's a complete template with hooks and settings:
-
-```yaml
-name: "go-service"
-description: "Production-ready Go service template"
-version: "1.0.0"
-
-variables:
-  project_name:
-    type: string
-    prompt: "Project name"
-    default: "my-service"
-
-  module_name:
-    type: string
-    prompt: "Go module name"
-    default: "github.com/user/my-service"
-
-hooks:
-  pre_generation:
-    - "echo 'Creating Go service: {{.project_name}}'"
-  post_generation:
-    - "cd {{.project_name}} && go mod init {{.module_name}}"
-    - "cd {{.project_name}} && go mod tidy"
-    - "echo 'Service {{.project_name}} is ready!'"
-
-template:
-  ignore_patterns: ["*.tmp", ".DS_Store"]
-  keep_permissions: true
-```
-
-You can use variables in names and contents:
-
-```
-cmd/{{.project_name}}/main.go
-```
-
-```gotemplate
+```go
+// main.go
 package main
 
 import "fmt"
 
 func main() {
-  fmt.Println("{{.project_name | title}} is alive on port {{.port}}!")
+    fmt.Println("Welcome to {{.project_name}}!")
+    {{- if .enable_auth}}
+    fmt.Println("Authentication enabled")
+    {{- end}}
 }
 ```
 
-Running:
-
-```bash
-cutr gh://your-org/go-service-template ./awesome
-```
-
-Produces:
+File/directory names:
 
 ```
-./awesome/
-  cmd/awesome/main.go
-  README.md
-  ...
+{{.project_name}}/
+├── {{.project_name}}.go
+├── config/
+│   └── {{.environment}}.yaml
+└── README.md
 ```
+
+## Template Sources
+
+cutr supports multiple template sources:
+
+| Format           | Example                            | Description                 |
+| ---------------- | ---------------------------------- | --------------------------- |
+| Local path       | `./templates/api`                  | Directory on filesystem     |
+| HTTPS Git        | `https://github.com/user/template` | Public Git repository       |
+| SSH Git          | `git@github.com:user/template.git` | Git over SSH                |
+| GitHub shorthand | `gh://user/template`               | Expands to GitHub HTTPS URL |
 
 ## Examples
 
-Check out the [examples/](examples/) directory for complete template examples:
-
-- **[go-cli-cobra](examples/go-cli-cobra/)** - Modern Go CLI application with Cobra framework, hooks, and configuration
-
-Try it:
+The `examples/` directory contains ready-to-use templates:
 
 ```bash
-cutr examples/go-cli-cobra ./my-awesome-cli
+# Create a Go CLI application with Cobra
+cutr examples/go-cli-cobra ./my-cli
+cd my-cli
+go run . --help
 ```
 
-## Development
+See [examples/README.md](examples/README.md) for detailed information about available templates.
 
-- **Run tests**: `go test ./...`
-- **Build**: `go build`
-- **Run locally**: `go run . <template> [output_dir]`
+## Help
 
-## Why cutr?
+```bash
+# Show usage
+cutr --help
+cutr -h
 
-- Minimal moving parts; built for speed and clarity
-- Friendly defaults and helpful failures
-- Uses familiar Go templates and adds practical string helpers
+# Get help during prompts
+# Press Ctrl+C to cancel at any time
+```
 
-Related: Cookiecutter popularized this workflow; cutr keeps the spirit but pares it down for Go-first teams.
+## Development Status
+
+cutr is **production ready** with a stable API. It's actively maintained and used for scaffolding Go projects, web applications, and development tools.
+
+**Roadmap:**
+
+- Additional variable types (multi-choice, password)
+- Template validation and testing tools
+- Improved error messages and debugging
+- Template registry/marketplace
+
+## Contributing
+
+Contributions welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new functionality
+4. Ensure all tests pass: `go test ./...`
+5. Submit a pull request
+
+**Areas that need help:**
+
+- Additional template examples
+- Documentation improvements
+- Cross-platform testing
+- Performance optimizations
 
 ## License
 
-[MIT](LICENSE)
+MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+Built with ❤️ for developers who value simplicity and speed.

@@ -18,7 +18,7 @@ func NewProgressHandler(term *terminal.Terminal) *ProgressHandler {
 }
 
 // ShowProgress displays a progress bar for long-running operations
-func (p *ProgressHandler) ShowProgress(message string, operation func() error) error {
+func (p *ProgressHandler) ShowProgress(message, successMessage string, operation func() error) error {
 	prog := prompts.NewProgress(prompts.ProgressOptions{
 		Style:  "heavy",
 		Max:    100,
@@ -47,7 +47,7 @@ func (p *ProgressHandler) ShowProgress(message string, operation func() error) e
 				prog.Stop("Failed", 2)
 				return err
 			} else {
-				prog.Stop("Done!", 0)
+				prog.Stop(successMessage, 0)
 			}
 			return nil
 		case <-ticker.C:

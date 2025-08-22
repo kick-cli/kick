@@ -1,4 +1,4 @@
-package hooks
+package internal
 
 import (
 	"context"
@@ -9,14 +9,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/yarlson/cutr/internal/config"
 )
 
 func TestExecutor_ExecutePreGeneration(t *testing.T) {
 	tests := []struct {
 		name         string
-		hooks        config.Hooks
+		hooks        Hooks
 		workDir      string
 		data         map[string]any
 		wantErr      bool
@@ -26,19 +24,19 @@ func TestExecutor_ExecutePreGeneration(t *testing.T) {
 	}{
 		{
 			name:  "empty hooks",
-			hooks: config.Hooks{},
+			hooks: Hooks{},
 			data:  map[string]any{"name": "test"},
 		},
 		{
 			name: "single echo command",
-			hooks: config.Hooks{
+			hooks: Hooks{
 				PreGeneration: []string{"echo 'Starting generation'"},
 			},
 			data: map[string]any{"name": "test"},
 		},
 		{
 			name: "multiple commands",
-			hooks: config.Hooks{
+			hooks: Hooks{
 				PreGeneration: []string{
 					"echo 'First command'",
 					"echo 'Second command'",
@@ -48,7 +46,7 @@ func TestExecutor_ExecutePreGeneration(t *testing.T) {
 		},
 		{
 			name: "template rendering in command",
-			hooks: config.Hooks{
+			hooks: Hooks{
 				PreGeneration: []string{
 					"echo 'Project: {{.name}}'",
 				},
@@ -57,7 +55,7 @@ func TestExecutor_ExecutePreGeneration(t *testing.T) {
 		},
 		{
 			name: "create file hook",
-			hooks: config.Hooks{
+			hooks: Hooks{
 				PreGeneration: []string{
 					"touch pre-generation-marker.txt",
 				},
@@ -70,7 +68,7 @@ func TestExecutor_ExecutePreGeneration(t *testing.T) {
 		},
 		{
 			name: "invalid command",
-			hooks: config.Hooks{
+			hooks: Hooks{
 				PreGeneration: []string{
 					"nonexistent-command-xyz",
 				},
@@ -81,7 +79,7 @@ func TestExecutor_ExecutePreGeneration(t *testing.T) {
 		},
 		{
 			name: "command with exit code 1",
-			hooks: config.Hooks{
+			hooks: Hooks{
 				PreGeneration: []string{
 					"exit 1",
 				},
@@ -92,7 +90,7 @@ func TestExecutor_ExecutePreGeneration(t *testing.T) {
 		},
 		{
 			name: "template rendering error",
-			hooks: config.Hooks{
+			hooks: Hooks{
 				PreGeneration: []string{
 					"echo '{{.nonexistent}}'",
 				},
@@ -139,7 +137,7 @@ func TestExecutor_ExecutePreGeneration(t *testing.T) {
 func TestExecutor_ExecutePostGeneration(t *testing.T) {
 	tests := []struct {
 		name         string
-		hooks        config.Hooks
+		hooks        Hooks
 		workDir      string
 		data         map[string]any
 		wantErr      bool
@@ -149,12 +147,12 @@ func TestExecutor_ExecutePostGeneration(t *testing.T) {
 	}{
 		{
 			name:  "empty hooks",
-			hooks: config.Hooks{},
+			hooks: Hooks{},
 			data:  map[string]any{"name": "test"},
 		},
 		{
 			name: "git init command",
-			hooks: config.Hooks{
+			hooks: Hooks{
 				PostGeneration: []string{
 					"git init",
 				},
@@ -167,7 +165,7 @@ func TestExecutor_ExecutePostGeneration(t *testing.T) {
 		},
 		{
 			name: "multiple post commands",
-			hooks: config.Hooks{
+			hooks: Hooks{
 				PostGeneration: []string{
 					"touch post-marker-1.txt",
 					"touch post-marker-2.txt",
@@ -183,7 +181,7 @@ func TestExecutor_ExecutePostGeneration(t *testing.T) {
 		},
 		{
 			name: "template with project name",
-			hooks: config.Hooks{
+			hooks: Hooks{
 				PostGeneration: []string{
 					"echo '{{.project_name}}' > project-name.txt",
 				},
@@ -283,7 +281,7 @@ func TestExecutor_ExecuteBothHooks(t *testing.T) {
 		require.NoError(t, err)
 		defer func() { _ = os.RemoveAll(workDir) }()
 
-		hooks := config.Hooks{
+		hooks := Hooks{
 			PreGeneration: []string{
 				"echo 'pre: {{.name}}' > pre.txt",
 				"mkdir -p src",

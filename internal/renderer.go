@@ -1,4 +1,4 @@
-package renderer
+package internal
 
 import (
 	"bytes"
@@ -13,8 +13,6 @@ import (
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-
-	"github.com/yarlson/cutr/internal/config"
 )
 
 // Renderer handles template rendering operations.
@@ -24,7 +22,7 @@ type Renderer struct {
 }
 
 // New creates a new template renderer.
-func New() *Renderer {
+func NewRenderer() *Renderer {
 	return &Renderer{
 		funcMap: newTemplateFuncs(),
 	}
@@ -83,7 +81,7 @@ func (r *Renderer) RenderTree(srcRoot, outRoot string, data map[string]any) erro
 
 // RenderTreeWithSettings walks the source template directory and renders all files to the output directory
 // using the provided template settings.
-func (r *Renderer) RenderTreeWithSettings(srcRoot, outRoot string, data map[string]any, settings config.TemplateSettings) error {
+func (r *Renderer) RenderTreeWithSettings(srcRoot, outRoot string, data map[string]any, settings TemplateSettings) error {
 	// Make sure output exists
 	if err := os.MkdirAll(outRoot, 0o755); err != nil {
 		return err
@@ -165,7 +163,7 @@ func (r *Renderer) renderPath(rel string, data map[string]any) (string, error) {
 
 // shouldSkip determines if a file or directory should be skipped during rendering.
 func (r *Renderer) shouldSkip(basename string, _ bool) bool {
-	return basename == ".git" || basename == config.CutrYAML
+	return basename == ".git" || basename == CutrYAML
 }
 
 // processFile handles copying binary files or rendering text files.
@@ -363,7 +361,7 @@ func isLower(r rune) bool { return unicode.IsLower(r) }
 func toLowerRune(r rune) rune { return unicode.ToLower(r) }
 
 // shouldIgnoreWithSettings checks if a file should be ignored based on template settings.
-func (r *Renderer) shouldIgnoreWithSettings(relPath string, isDir bool, settings config.TemplateSettings) bool {
+func (r *Renderer) shouldIgnoreWithSettings(relPath string, isDir bool, settings TemplateSettings) bool {
 	basename := filepath.Base(relPath)
 
 	for _, pattern := range settings.IgnorePatterns {
@@ -385,7 +383,7 @@ func (r *Renderer) shouldIgnoreWithSettings(relPath string, isDir bool, settings
 }
 
 // processFileWithSettings handles copying binary files or rendering text files with template settings.
-func (r *Renderer) processFileWithSettings(srcPath, targetPath string, data map[string]any, settings config.TemplateSettings) error {
+func (r *Renderer) processFileWithSettings(srcPath, targetPath string, data map[string]any, settings TemplateSettings) error {
 	// Get file info for permissions
 	srcInfo, err := os.Stat(srcPath)
 	if err != nil {

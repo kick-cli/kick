@@ -1,29 +1,17 @@
-package ui
+package internal
 
 import (
 	"time"
 
-	"github.com/yarlson/tap/prompts"
-	"github.com/yarlson/tap/terminal"
+	"github.com/yarlson/tap"
 )
 
-// ProgressHandler manages progress display for long-running operations
-type ProgressHandler struct {
-	term *terminal.Terminal
-}
-
-// NewProgressHandler creates a new progress handler
-func NewProgressHandler(term *terminal.Terminal) *ProgressHandler {
-	return &ProgressHandler{term: term}
-}
-
 // ShowProgress displays a progress bar for long-running operations
-func (p *ProgressHandler) ShowProgress(message, successMessage string, operation func() error) error {
-	prog := prompts.NewProgress(prompts.ProgressOptions{
-		Style:  "heavy",
-		Max:    100,
-		Size:   40,
-		Output: p.term.Writer,
+func ShowProgress(message, successMessage string, operation func() error) error {
+	prog := tap.NewProgress(tap.ProgressOptions{
+		Style: "heavy",
+		Max:   100,
+		Size:  40,
 	})
 
 	prog.Start(message)

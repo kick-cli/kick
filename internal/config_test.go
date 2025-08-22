@@ -1,4 +1,4 @@
-package config
+package internal
 
 import (
 	"testing"
@@ -174,18 +174,18 @@ variables:
     type: string
     prompt: "Project name"
     default: "my-app"
-  
+
   database:
     type: choice
     prompt: "Database"
     choices: ["postgres", "mysql"]
     default: "postgres"
-  
+
   enable_auth:
     type: boolean
     prompt: "Enable authentication?"
     default: false
-  
+
   port:
     type: number
     prompt: "Port"
@@ -486,19 +486,19 @@ variables:
   project_name:
     type: string
     default: "my-project"
-  
+
   author_name:
     type: string
     default: "John Doe"
-  
+
   description:
     type: string
     default: "A test project"
-  
+
   enable_feature:
     type: boolean
     default: true
-  
+
   version:
     type: string
     default: "1.0.0"`,
@@ -520,11 +520,11 @@ variables:
   z_last:
     type: string
     default: "last"
-  
+
   a_first:
-    type: string  
+    type: string
     default: "first"
-  
+
   m_middle:
     type: string
     default: "middle"`,

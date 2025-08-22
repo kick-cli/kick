@@ -1,4 +1,4 @@
-package hooks
+package internal
 
 import (
 	"bytes"
@@ -7,8 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"text/template"
-
-	"github.com/yarlson/cutr/internal/config"
 )
 
 // Executor handles hook execution operations.
@@ -20,7 +18,7 @@ func New() *Executor {
 }
 
 // ExecutePreGeneration executes pre-generation hooks.
-func (e *Executor) ExecutePreGeneration(ctx context.Context, hooks config.Hooks, workDir string, data map[string]any) error {
+func (e *Executor) ExecutePreGeneration(ctx context.Context, hooks Hooks, workDir string, data map[string]any) error {
 	for _, command := range hooks.PreGeneration {
 		if err := e.executeCommand(ctx, command, workDir, data); err != nil {
 			return fmt.Errorf("execute pre-generation hook: %w", err)
@@ -30,7 +28,7 @@ func (e *Executor) ExecutePreGeneration(ctx context.Context, hooks config.Hooks,
 }
 
 // ExecutePostGeneration executes post-generation hooks.
-func (e *Executor) ExecutePostGeneration(ctx context.Context, hooks config.Hooks, workDir string, data map[string]any) error {
+func (e *Executor) ExecutePostGeneration(ctx context.Context, hooks Hooks, workDir string, data map[string]any) error {
 	for _, command := range hooks.PostGeneration {
 		if err := e.executeCommand(ctx, command, workDir, data); err != nil {
 			return fmt.Errorf("execute post-generation hook: %w", err)

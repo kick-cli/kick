@@ -2,10 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/yarlson/cutr/internal"
 	"os"
-
-	"github.com/yarlson/cutr/internal/config"
-	"github.com/yarlson/cutr/internal/generator"
 )
 
 func main() {
@@ -15,7 +13,7 @@ func main() {
 	}
 
 	// Parse command line arguments
-	opts := generator.Options{
+	opts := internal.Options{
 		Source:    os.Args[1],
 		OutputDir: ".",
 	}
@@ -23,14 +21,7 @@ func main() {
 		opts.OutputDir = os.Args[2]
 	}
 
-	// Create generator and run
-	gen, err := generator.New()
-	if err != nil {
-		fatal("initialize generator: %v", err)
-	}
-	defer gen.Close()
-
-	if err := gen.Generate(opts); err != nil {
+	if err := internal.Generate(opts); err != nil {
 		fatal("generate template: %v", err)
 	}
 }
@@ -51,7 +42,7 @@ Example:
   cutr gh://my-org/service-template ./my-service
   cutr /path/to/template ./out
 
-`, config.CutrYAML)
+`, internal.CutrYAML)
 }
 
 func hasHelpFlag(args []string) bool {

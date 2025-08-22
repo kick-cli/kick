@@ -1,4 +1,4 @@
-package source
+package internal
 
 import (
 	"os"
@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNew(t *testing.T) {
-	resolver := New()
+func TestNewResolver(t *testing.T) {
+	resolver := NewResolver()
 
 	require.NotNil(t, resolver)
 	assert.IsType(t, &Resolver{}, resolver)
@@ -116,7 +116,7 @@ func TestResolver_Resolve(t *testing.T) {
 		},
 	}
 
-	resolver := New()
+	resolver := NewResolver()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -184,7 +184,7 @@ func TestResolver_Resolve_GitIntegration(t *testing.T) {
 		t.Skip("Skipping git integration test in short mode")
 	}
 
-	resolver := New()
+	resolver := NewResolver()
 
 	t.Run("public github repository", func(t *testing.T) {
 		// Try to clone a small public repository
@@ -229,7 +229,7 @@ func TestResolver_Resolve_GitIntegration(t *testing.T) {
 }
 
 func TestResolver_Resolve_ErrorScenarios(t *testing.T) {
-	resolver := New()
+	resolver := NewResolver()
 
 	t.Run("nil resolver method call", func(t *testing.T) {
 		// Test that the method handles basic cases properly

@@ -1,4 +1,4 @@
-package ui
+package internal
 
 import (
 	"fmt"
@@ -6,28 +6,15 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/yarlson/cutr/internal/config"
-	"github.com/yarlson/tap/core"
-	"github.com/yarlson/tap/prompts"
-	"github.com/yarlson/tap/terminal"
+	"github.com/yarlson/tap"
 )
 
-// Collector handles prompting for template variables
-type Collector struct {
-	term *terminal.Terminal
-}
-
-// New creates a new prompt collector
-func New(term *terminal.Terminal) *Collector {
-	return &Collector{term: term}
-}
-
 // CollectValues prompts for and collects user input for template variables
-func (c *Collector) CollectValues(variables map[string]config.Variable, order []string) (map[string]any, error) {
+func CollectValues(variables map[string]Variable, order []string) (map[string]any, error) {
 	values := make(map[string]any, len(variables))
 
 	// Project scaffolding intro
-	prompts.Intro("🏗️  Project Scaffolding", prompts.MessageOptions{Output: c.term.Writer})
+	tap.Intro("🏗️  Project Scaffolding")
 
 	// Process each variable in order
 	for _, name := range order {
@@ -39,15 +26,15 @@ func (c *Collector) CollectValues(variables map[string]config.Variable, order []
 
 		// Handle different variable types
 		if len(variable.Choices) > 0 {
-			result, err = c.promptChoice(variable, defStr)
+			result, err = promptChoice(variable, defStr)
 		} else {
 			switch variable.Type {
 			case "boolean":
-				result, err = c.promptBoolean(variable)
+				result, err = promptBoolean(variable)
 			case "number":
-				result, err = c.promptNumber(variable, defStr)
+				result, err = promptNumber(variable, defStr)
 			default:
-				result, err = c.promptText(variable, defStr)
+				result, err = promptText(variable, defStr)
 			}
 		}
 
@@ -56,8 +43,8 @@ func (c *Collector) CollectValues(variables map[string]config.Variable, order []
 		}
 
 		// Check for cancellation
-		if core.IsCancel(result) {
-			prompts.Cancel("Generation aborted", prompts.MessageOptions{Output: c.term.Writer})
+		if tap.IsCancel(result) {
+			tap.Cancel("Generation aborted")
 			return nil, fmt.Errorf("user cancelled")
 		}
 
@@ -68,10 +55,10 @@ func (c *Collector) CollectValues(variables map[string]config.Variable, order []
 }
 
 // promptChoice handles selection from predefined choices
-func (c *Collector) promptChoice(variable config.Variable, defStr string) (any, error) {
-	options := make([]prompts.SelectOption[string], len(variable.Choices))
+func promptChoice(variable Variable, defStr string) (any, error) {
+	options := make([]tap.SelectOption[string], len(variable.Choices))
 	for i, choice := range variable.Choices {
-		options[i] = prompts.SelectOption[string]{
+		options[i] = tap.SelectOption[string]{
 			Value: choice,
 			Label: choice,
 		}
@@ -86,37 +73,31 @@ func (c *Collector) promptChoice(variable config.Variable, defStr string) (any, 
 		}
 	}
 
-	return prompts.Select(prompts.SelectOptions[string]{
+	return tap.Select(tap.SelectOptions[string]{
 		Message:      variable.Prompt,
 		Options:      options,
 		InitialValue: initialValue,
-		Input:        c.term.Reader,
-		Output:       c.term.Writer,
 	}), nil
 }
 
 // promptBoolean handles yes/no prompts
-func (c *Collector) promptBoolean(variable config.Variable) (any, error) {
+func promptBoolean(variable Variable) (any, error) {
 	initialValue := asBool(variable.Default)
 
-	return prompts.Confirm(prompts.ConfirmOptions{
+	return tap.Confirm(tap.ConfirmOptions{
 		Message:      variable.Prompt,
 		Active:       "Yes",
 		Inactive:     "No",
 		InitialValue: initialValue,
-		Input:        c.term.Reader,
-		Output:       c.term.Writer,
 	}), nil
 }
 
 // promptNumber handles numeric input with validation
-func (c *Collector) promptNumber(variable config.Variable, defStr string) (any, error) {
-	result := prompts.Text(prompts.TextOptions{
+func promptNumber(variable Variable, defStr string) (any, error) {
+	result := tap.Text(tap.TextOptions{
 		Message:      variable.Prompt,
 		Placeholder:  defStr,
 		DefaultValue: defStr,
-		Input:        c.term.Reader,
-		Output:       c.term.Writer,
 		Validate: func(input string) error {
 			if input == "" {
 				return nil // Allow empty input to use default
@@ -128,7 +109,7 @@ func (c *Collector) promptNumber(variable config.Variable, defStr string) (any, 
 		},
 	})
 
-	if core.IsCancel(result) {
+	if tap.IsCancel(result) {
 		return result, nil
 	}
 
@@ -145,7 +126,7 @@ func (c *Collector) promptNumber(variable config.Variable, defStr string) (any, 
 }
 
 // promptText handles text input with optional pattern validation
-func (c *Collector) promptText(variable config.Variable, defStr string) (any, error) {
+func promptText(variable Variable, defStr string) (any, error) {
 	var validate func(string) error
 	if variable.Pattern != "" {
 		validate = func(input string) error {
@@ -166,16 +147,14 @@ func (c *Collector) promptText(variable config.Variable, defStr string) (any, er
 		}
 	}
 
-	result := prompts.Text(prompts.TextOptions{
+	result := tap.Text(tap.TextOptions{
 		Message:      variable.Prompt,
 		Placeholder:  defStr,
 		DefaultValue: defStr,
-		Input:        c.term.Reader,
-		Output:       c.term.Writer,
 		Validate:     validate,
 	})
 
-	if core.IsCancel(result) {
+	if tap.IsCancel(result) {
 		return result, nil
 	}
 

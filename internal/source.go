@@ -1,4 +1,4 @@
-package source
+package internal
 
 import (
 	"errors"
@@ -13,8 +13,8 @@ import (
 // Resolver handles template source resolution (local paths or git repositories)
 type Resolver struct{}
 
-// New creates a new source resolver
-func New() *Resolver {
+// NewResolver creates a new source resolver
+func NewResolver() *Resolver {
 	return &Resolver{}
 }
 

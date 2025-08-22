@@ -1,18 +1,16 @@
-package renderer
+package internal
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/yarlson/cutr/internal/config"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestNew(t *testing.T) {
-	renderer := New()
+func TestNewRenderer(t *testing.T) {
+	renderer := NewRenderer()
 
 	require.NotNil(t, renderer)
 	assert.IsType(t, &Renderer{}, renderer)
@@ -291,7 +289,7 @@ Trim: "spaced text"`
 		},
 	}
 
-	renderer := New()
+	renderer := NewRenderer()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -331,7 +329,7 @@ Trim: "spaced text"`
 }
 
 func TestRenderer_RenderTree_EdgeCases(t *testing.T) {
-	renderer := New()
+	renderer := NewRenderer()
 
 	t.Run("empty template path rendering", func(t *testing.T) {
 		srcRoot, err := os.MkdirTemp("", "cutr-src-*")
@@ -399,7 +397,7 @@ func TestRenderer_RenderTree_EdgeCases(t *testing.T) {
 func TestRenderer_RenderTreeWithSettings(t *testing.T) {
 	tests := []struct {
 		name         string
-		settings     config.TemplateSettings
+		settings     TemplateSettings
 		setupFunc    func(t *testing.T) (srcRoot, outRoot string, data map[string]any)
 		validateFunc func(t *testing.T, outRoot string)
 		wantErr      bool
@@ -407,7 +405,7 @@ func TestRenderer_RenderTreeWithSettings(t *testing.T) {
 	}{
 		{
 			name: "ignore patterns - tmp files",
-			settings: config.TemplateSettings{
+			settings: TemplateSettings{
 				IgnorePatterns: []string{"*.tmp", "temp_*"},
 			},
 			setupFunc: func(t *testing.T) (string, string, map[string]any) {
@@ -444,7 +442,7 @@ func TestRenderer_RenderTreeWithSettings(t *testing.T) {
 		},
 		{
 			name: "ignore patterns - nested directories",
-			settings: config.TemplateSettings{
+			settings: TemplateSettings{
 				IgnorePatterns: []string{"node_modules", "*.log"},
 			},
 			setupFunc: func(t *testing.T) (string, string, map[string]any) {
@@ -486,7 +484,7 @@ func TestRenderer_RenderTreeWithSettings(t *testing.T) {
 		},
 		{
 			name: "keep permissions enabled",
-			settings: config.TemplateSettings{
+			settings: TemplateSettings{
 				KeepPermissions: true,
 			},
 			setupFunc: func(t *testing.T) (string, string, map[string]any) {
@@ -522,7 +520,7 @@ func TestRenderer_RenderTreeWithSettings(t *testing.T) {
 		},
 		{
 			name: "keep permissions disabled - should use default",
-			settings: config.TemplateSettings{
+			settings: TemplateSettings{
 				KeepPermissions: false,
 			},
 			setupFunc: func(t *testing.T) (string, string, map[string]any) {
@@ -557,7 +555,7 @@ func TestRenderer_RenderTreeWithSettings(t *testing.T) {
 				_ = os.RemoveAll(outRoot)
 			}()
 
-			renderer := New()
+			renderer := NewRenderer()
 			err := renderer.RenderTreeWithSettings(srcRoot, outRoot, data, tt.settings)
 
 			if tt.wantErr {

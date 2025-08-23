@@ -7,46 +7,49 @@ Set Height 800
 Set TypingSpeed 100ms
 
 Sleep 1s
-Type "go run ./main.go examples/demo-template ./demo-out"
+Type "go run ./main.go examples/go-cli-cobra ./demo-out"
 Enter
 Sleep 2s
 
-# First prompt: Enter name
+# Project scaffolding intro appears here
+
+# 1) Project name
 Type "Alice"
 Enter
 Sleep 1.5s
 
-# Second prompt: Programming language (accept default "Go")
+# 2) Go module name (accept default)
 Enter
 Sleep 1.5s
 
-# Third prompt: Select project type (navigate to "Web Application")
-Down
-Sleep 0.5s
+# 3) Author name (accept default)
 Enter
 Sleep 1.5s
 
-# Fourth prompt: Years of experience (change from default)
-Type "none"
-Enter
-Sleep 3s
-Backspace
-Backspace
-Backspace
-Backspace
-Type "3"
+# 4) Author email (accept default)
 Enter
 Sleep 1.5s
 
-# Fifth prompt: Show summary (accept default "Yes")
+# 5) Project description (accept default)
 Enter
 Sleep 1.5s
 
-# Sixth prompt: Detailed format (change to "Yes")
-Right
-Sleep 0.5s
+# 6) License (navigate to MIT and accept)
+# Defaults to MIT already; just accept
 Enter
-Sleep 3s
+Sleep 1.0s
 
-# Let the summary display for a moment
+# 7) Include configuration file support? (accept default Yes)
+Enter
+Sleep 1.0s
+
+# 8) Include version command? (accept default Yes)
+Enter
+Sleep 1.0s
+
+# 9) Go version (accept default)
+Enter
+Sleep 1.5s
+
+# Progress and hooks output
 Sleep 5s

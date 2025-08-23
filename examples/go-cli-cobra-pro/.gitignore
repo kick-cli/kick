@@ -1,0 +1,21 @@
+# Binaries
+{{.project_name}}
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Build artifacts
+/dist/
+/bin/
+release/
+
+# Go
+/vendor/
+.coverage/
+
+# Editors
+*.swp
+.idea/
+.vscode/

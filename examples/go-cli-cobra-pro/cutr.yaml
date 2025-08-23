@@ -1,0 +1,87 @@
+name: "go-cli-cobra-pro"
+description: "Production-grade Go CLI template with Cobra, tests, lint, release, CI"
+version: "1.0.0"
+repository: "https://github.com/yarlson/cutr"
+
+variables:
+  project_name:
+    type: string
+    prompt: "Project name"
+    default: "pro-cli"
+    pattern: "^[a-z][a-z0-9-]*$"
+    help: "Lowercase, digits and hyphens only"
+
+  module_name:
+    type: string
+    prompt: "Go module name"
+    default: "github.com/user/pro-cli"
+    pattern: "^[a-zA-Z0-9._/-]+$"
+    help: "Go module path (e.g., github.com/user/project)"
+
+  author_name:
+    type: string
+    prompt: "Author name"
+    default: "Your Name"
+
+  author_email:
+    type: string
+    prompt: "Author email"
+    default: "you@example.com"
+
+  description:
+    type: string
+    prompt: "Project description"
+    default: "A production-ready CLI application in Go"
+
+  license:
+    type: choice
+    prompt: "License"
+    choices: ["MIT", "Apache-2.0", "GPL-3.0", "BSD-3-Clause"]
+    default: "MIT"
+
+  include_config:
+    type: boolean
+    prompt: "Include configuration with Viper?"
+    default: true
+
+  include_version:
+    type: boolean
+    prompt: "Include version command?"
+    default: true
+
+  include_ci:
+    type: boolean
+    prompt: "Include GitHub Actions CI?"
+    default: true
+
+  go_version:
+    type: string
+    prompt: "Minimum Go version"
+    default: "1.24"
+
+hooks:
+  pre_generation:
+    - "echo '🚀 Creating Go CLI project: {{.project_name}}'"
+    - "echo 'Module: {{.module_name}}'"
+    - "echo 'Author: {{.author_name}} <{{.author_email}}>'"
+
+  post_generation:
+    - "echo '📦 Initializing Go module...'"
+    - "go mod init {{.module_name}}"
+    - "echo '⬇️  Installing dependencies...'"
+    - "go get github.com/spf13/cobra@latest"
+    - "go get github.com/stretchr/testify@latest"
+    - "go get github.com/spf13/viper@latest"
+    - "go get github.com/rs/zerolog@latest"
+    - "go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"
+    - "echo '🔧 Tidying dependencies...'"
+    - "go mod tidy"
+    - "echo '✅ Setting executable permissions...'"
+    - "chmod +x scripts/build.sh"
+    - "echo '🎉 Project {{.project_name}} is ready!'"
+
+template:
+  ignore_patterns:
+    - "*.tmp"
+    - ".DS_Store"
+  keep_permissions: true

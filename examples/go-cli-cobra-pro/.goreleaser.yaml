@@ -1,0 +1,41 @@
+project_name: {{.project_name}}
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: {{.project_name}}
+    main: ./
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X {{.module_name}}/internal/version.Version={{`{{.Version}}`}} -X {{.module_name}}/internal/version.Commit={{`{{.Commit}}`}} -X {{.module_name}}/internal/version.Date={{`{{.Date}}`}}
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{`{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}`}}
+
+checksum:
+  name_template: 'checksums.txt'
+
+dockers:
+  - image_templates:
+      - '{{`ghcr.io/`}}{{.module_name}}{{`:`}}{{`{{ .Version }}`}}'
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'

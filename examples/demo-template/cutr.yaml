@@ -1,0 +1,35 @@
+name: "cutr-demo"
+description: "Demo template for README GIF"
+version: "1.0.0"
+
+variables:
+  name:
+    type: string
+    prompt: "Enter name"
+    default: "World"
+
+  language:
+    type: string
+    prompt: "Programming language"
+    default: "Go"
+
+  project_type:
+    type: choice
+    prompt: "Select project type"
+    choices: ["Library", "Web Application", "CLI Tool"]
+    default: "Library"
+
+  years_experience:
+    type: number
+    prompt: "Years of experience"
+    default: 1
+
+  show_summary:
+    type: boolean
+    prompt: "Show summary"
+    default: true
+
+  detailed_format:
+    type: boolean
+    prompt: "Detailed format"
+    default: false

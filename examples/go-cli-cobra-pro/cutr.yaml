@@ -54,6 +54,11 @@ variables:
     prompt: "Include GitHub Actions CI?"
     default: true
 
+  init_git:
+    type: boolean
+    prompt: "Initialize a Git repository?"
+    default: true
+
   go_version:
     type: string
     prompt: "Minimum Go version"
@@ -78,6 +83,10 @@ hooks:
     - "go mod tidy"
     - "echo '✅ Setting executable permissions...'"
     - "chmod +x scripts/build.sh"
+    - "{{- if .init_git}}echo '🌱 Initializing git repository...'{{- end }}"
+    - "{{- if .init_git}}git init{{- end }}"
+    - "{{- if .init_git}}git branch -M main{{- end }}"
+    - "{{- if .init_git}}mod='{{.module_name}}'; if [ \"${mod#github.com/}\" != \"$mod\" ]; then git remote add origin \"git@github.com:${mod#github.com/}.git\"; fi{{- end }}"
     - "echo '🎉 Project {{.project_name}} is ready!'"
 
 template:

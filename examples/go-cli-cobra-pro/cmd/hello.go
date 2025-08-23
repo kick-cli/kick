@@ -15,7 +15,7 @@ func newHelloCmd() *cobra.Command {
 		Use:   "hello [name]",
 		Short: "Print a friendly greeting",
 		Args:  cobra.MaximumNArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
+        RunE: func(cmd *cobra.Command, args []string) error {
 			name := "World"
 			if len(args) > 0 {
 				name = args[0]
@@ -24,8 +24,8 @@ func newHelloCmd() *cobra.Command {
 			if uppercase {
 				msg = strings.ToUpper(msg)
 			}
-			fmt.Fprintln(cmd.OutOrStdout(), msg)
-			return nil
+            _, err := fmt.Fprintln(cmd.OutOrStdout(), msg)
+            return err
 		},
 	}
 

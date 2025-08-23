@@ -23,8 +23,7 @@ builds:
       - arm64
 
 archives:
-  - format: tar.gz
-    name_template: >-
+  - name_template: >-
       {{`{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}`}}
 
 checksum:

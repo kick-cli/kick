@@ -42,12 +42,6 @@ func CollectValues(variables map[string]Variable, order []string) (map[string]an
 			return nil, err
 		}
 
-		// Check for cancellation
-		if tap.IsCancel(result) {
-			tap.Cancel("Generation aborted")
-			return nil, fmt.Errorf("user cancelled")
-		}
-
 		values[name] = result
 	}
 
@@ -94,7 +88,7 @@ func promptBoolean(variable Variable) (any, error) {
 
 // promptNumber handles numeric input with validation
 func promptNumber(variable Variable, defStr string) (any, error) {
-	result := tap.Text(tap.TextOptions{
+	input := tap.Text(tap.TextOptions{
 		Message:      variable.Prompt,
 		Placeholder:  defStr,
 		DefaultValue: defStr,
@@ -108,12 +102,6 @@ func promptNumber(variable Variable, defStr string) (any, error) {
 			return nil
 		},
 	})
-
-	if tap.IsCancel(result) {
-		return result, nil
-	}
-
-	input := result.(string)
 
 	// Convert to number
 	if input == "" {
@@ -147,18 +135,12 @@ func promptText(variable Variable, defStr string) (any, error) {
 		}
 	}
 
-	result := tap.Text(tap.TextOptions{
+	input := tap.Text(tap.TextOptions{
 		Message:      variable.Prompt,
 		Placeholder:  defStr,
 		DefaultValue: defStr,
 		Validate:     validate,
 	})
-
-	if tap.IsCancel(result) {
-		return result, nil
-	}
-
-	input := result.(string)
 	if input == "" {
 		return defStr, nil
 	}

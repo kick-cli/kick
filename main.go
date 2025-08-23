@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/yarlson/cutr/internal"
 	"os"
+
+	"github.com/yarlson/cutr/internal"
 )
 
 func main() {

@@ -1,4 +1,4 @@
-Output ../../assets/demo.gif
+Output ./assets/demo.gif
 
 Set Shell zsh
 Set FontSize 28
@@ -7,7 +7,7 @@ Set Height 800
 Set TypingSpeed 100ms
 
 Sleep 1s
-Type "go run ./main.go examples/go-cli-cobra ./demo-out"
+Type "cutr ./examples/go-cli-cobra ./demo-out"
 Enter
 Sleep 2s
 
@@ -19,17 +19,17 @@ Enter
 Sleep 1.0s
 
 # 2) Go module name (change from default)
-Type "github.com/yaroslavk/stellar-cli"
+Type "github.com/yarlson/stellar-cli"
 Enter
 Sleep 1.0s
 
 # 3) Author name (change from default)
-Type "Yaroslav K"
+Type "yarlson"
 Enter
 Sleep 1.0s
 
 # 4) Author email (change from default)
-Type "yaroslav@example.com"
+Type "yar@yarlson.dev"
 Enter
 Sleep 1.0s
 
@@ -57,11 +57,8 @@ Enter
 Sleep 1.0s
 
 # 9) Go version (change to 1.22)
-Type "1.22"
+Type "1.24"
 Enter
-
-# Allow time for pre/post hooks and progress to complete
-Sleep 12s
 
 # Let the success outro display
 Sleep 4s

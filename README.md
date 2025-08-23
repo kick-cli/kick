@@ -69,30 +69,9 @@ cutr ./template
 
 ### Interactive Flow
 
-```bash
-$ cutr examples/go-cli-cobra ./my-cli
-
-🏗️  Project Scaffolding
-
-◇  Project name
-│  my-awesome-cli
-
-◇  Go module name
-│  github.com/myuser/my-awesome-cli
-
-◇  Author name
-│  John Developer
-
-# ... more prompts based on cutr.yaml ...
-
-◇  Pre generation hooks executed
-
-◇  Template rendering complete
-
-◇  Post generation hooks executed
-
-✓  Project scaffolded
-```
+<div>
+  <img src="assets/demo.gif" alt="Tap Demo" width="1400">
+</div>
 
 ## Template Configuration
 

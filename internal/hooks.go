@@ -7,14 +7,23 @@ import (
 	"os"
 	"os/exec"
 	"text/template"
+
+	"github.com/yarlson/tap"
 )
 
 // Executor handles hook execution operations.
-type Executor struct{}
+type Executor struct {
+	stream *tap.Stream
+}
 
 // New creates a new hook executor.
 func New() *Executor {
 	return &Executor{}
+}
+
+// NewWithStream creates a new hook executor with a provided tap stream.
+func NewWithStream(stream *tap.Stream) *Executor {
+	return &Executor{stream: stream}
 }
 
 // ExecutePreGeneration executes pre-generation hooks.
@@ -50,15 +59,34 @@ func (e *Executor) executeCommand(ctx context.Context, command string, workDir s
 	cmd.Dir = workDir
 	cmd.Env = os.Environ()
 
-	// Capture output for debugging
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-
-	if err := cmd.Run(); err != nil {
-		if stderr.Len() > 0 {
-			return fmt.Errorf("execute hook command %q: %w (stderr: %s)", renderedCommand, err, stderr.String())
+	if e.stream != nil {
+		// Use tap stream's built-in Pipe method for simple streaming
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			return fmt.Errorf("create stdout pipe: %w", err)
 		}
-		return fmt.Errorf("execute hook command %q: %w", renderedCommand, err)
+
+		if err := cmd.Start(); err != nil {
+			return fmt.Errorf("start hook command: %w", err)
+		}
+
+		// Let tap stream handle the output streaming
+		e.stream.Pipe(stdout)
+
+		if err := cmd.Wait(); err != nil {
+			return fmt.Errorf("execute hook command: %w", err)
+		}
+	} else {
+		// Fallback to original implementation
+		var stderr bytes.Buffer
+		cmd.Stderr = &stderr
+
+		if err := cmd.Run(); err != nil {
+			if stderr.Len() > 0 {
+				return fmt.Errorf("execute hook command: %w (stderr: %s)", err, stderr.String())
+			}
+			return fmt.Errorf("execute hook command: %w", err)
+		}
 	}
 
 	return nil

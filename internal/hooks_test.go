@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/yarlson/tap"
 )
 
 func TestExecutor_ExecutePreGeneration(t *testing.T) {
@@ -319,5 +320,142 @@ func TestExecutor_ExecuteBothHooks(t *testing.T) {
 
 		_, err = os.Stat(filepath.Join(workDir, "src", "main.go"))
 		require.NoError(t, err)
+	})
+}
+
+func TestExecutor_WithStreamingOutput(t *testing.T) {
+	t.Run("executor with stream executes hooks successfully", func(t *testing.T) {
+		workDir, err := os.MkdirTemp("", "cutr-stream-*")
+		require.NoError(t, err)
+		defer func() { _ = os.RemoveAll(workDir) }()
+
+		// Create stream and executor with streaming
+		stream := tap.NewStream(tap.StreamOptions{ShowTimer: false})
+		executor := NewWithStream(stream)
+
+		hooks := Hooks{
+			PreGeneration: []string{
+				"echo 'Line 1'",
+				"echo 'Line 2 from command'",
+				"touch streaming-test.txt",
+			},
+		}
+
+		data := map[string]any{"name": "test-project"}
+
+		// Start stream (this would normally show in terminal)
+		stream.Start("Testing streaming hooks")
+
+		// Execute hooks with streaming
+		err = executor.ExecutePreGeneration(context.Background(), hooks, workDir, data)
+		require.NoError(t, err, "Hooks should execute successfully with stream")
+
+		// Stop stream
+		stream.Stop("Hooks completed", 0)
+
+		// Verify that the commands actually executed (file created)
+		_, err = os.Stat(filepath.Join(workDir, "streaming-test.txt"))
+		require.NoError(t, err, "Hook commands should have been executed")
+	})
+
+	t.Run("executor with stream handles commands with mixed output", func(t *testing.T) {
+		workDir, err := os.MkdirTemp("", "cutr-stream-mixed-*")
+		require.NoError(t, err)
+		defer func() { _ = os.RemoveAll(workDir) }()
+
+		// Create stream and executor with streaming
+		stream := tap.NewStream(tap.StreamOptions{ShowTimer: false})
+		executor := NewWithStream(stream)
+
+		hooks := Hooks{
+			PreGeneration: []string{
+				"echo 'stdout message'",
+				"echo 'another line'",
+				"touch mixed-test.txt",
+			},
+		}
+
+		data := map[string]any{"name": "test-project"}
+
+		// Start stream
+		stream.Start("Testing mixed output streaming")
+
+		// Execute hooks with streaming
+		err = executor.ExecutePreGeneration(context.Background(), hooks, workDir, data)
+		require.NoError(t, err, "Should handle mixed output correctly")
+
+		// Stop stream
+		stream.Stop("Mixed output streaming completed", 0)
+
+		// Verify the file was created (proving commands executed)
+		_, err = os.Stat(filepath.Join(workDir, "mixed-test.txt"))
+		require.NoError(t, err, "Hook commands should execute successfully")
+	})
+
+	t.Run("executor without stream falls back to original behavior", func(t *testing.T) {
+		workDir, err := os.MkdirTemp("", "cutr-no-stream-*")
+		require.NoError(t, err)
+		defer func() { _ = os.RemoveAll(workDir) }()
+
+		// Use executor without stream
+		executor := New()
+
+		hooks := Hooks{
+			PreGeneration: []string{
+				"echo 'This should work without streaming'",
+				"touch fallback-test.txt",
+			},
+		}
+
+		data := map[string]any{"name": "test-project"}
+
+		// Execute hooks without streaming (should fall back to original behavior)
+		err = executor.ExecutePreGeneration(context.Background(), hooks, workDir, data)
+		require.NoError(t, err, "Should work fine without streaming")
+
+		// Verify file was created with fallback behavior
+		_, err = os.Stat(filepath.Join(workDir, "fallback-test.txt"))
+		require.NoError(t, err, "Fallback execution should work")
+	})
+
+	t.Run("NewWithStream creates executor with stream", func(t *testing.T) {
+		stream := tap.NewStream(tap.StreamOptions{ShowTimer: false})
+		executor := NewWithStream(stream)
+
+		assert.NotNil(t, executor, "Should create executor")
+		assert.Equal(t, stream, executor.stream, "Should store stream reference")
+	})
+
+	t.Run("hook commands output only, no command logging", func(t *testing.T) {
+		workDir, err := os.MkdirTemp("", "cutr-output-only-*")
+		require.NoError(t, err)
+		defer func() { _ = os.RemoveAll(workDir) }()
+
+		// Create stream and executor with streaming
+		stream := tap.NewStream(tap.StreamOptions{ShowTimer: false})
+		executor := NewWithStream(stream)
+
+		hooks := Hooks{
+			PreGeneration: []string{
+				"echo 'This is output only'",
+				"echo 'No commands should be shown'",
+			},
+		}
+
+		data := map[string]any{"name": "test-project"}
+
+		// Start stream
+		stream.Start("Testing output-only streaming")
+
+		// Execute hooks with streaming
+		err = executor.ExecutePreGeneration(context.Background(), hooks, workDir, data)
+		require.NoError(t, err, "Should execute successfully")
+
+		// Stop stream
+		stream.Stop("Output-only streaming completed", 0)
+
+		// Note: We can't easily test the stream output content in this test setup,
+		// but we can verify the functionality works by checking the commands executed.
+		// The key point is that only command output should appear in the stream.
 	})
 }

@@ -77,7 +77,7 @@ func loadConfig(templatePath string) (Config, error) {
 	return cfg, nil
 }
 
-// executeHooks runs pre or post generation hooks with progress display
+// executeHooks runs pre or post generation hooks with tap stream display
 func executeHooks(hookCommands []string, hookType, workDir string, data map[string]any) error {
 	if len(hookCommands) == 0 {
 		return nil
@@ -90,17 +90,34 @@ func executeHooks(hookCommands []string, hookType, workDir string, data map[stri
 		displayType = strings.ToUpper(string(displayType[0])) + displayType[1:]
 	}
 	successMessage := fmt.Sprintf("%s hooks executed", displayType)
-	return ShowProgress(message, successMessage, func() error {
-		hookExecutor := New()
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-		defer cancel()
 
-		if hookType == "pre-generation" {
-			return hookExecutor.ExecutePreGeneration(ctx, Hooks{PreGeneration: hookCommands}, workDir, data)
-		} else {
-			return hookExecutor.ExecutePostGeneration(ctx, Hooks{PostGeneration: hookCommands}, workDir, data)
-		}
-	})
+	// Create and start tap stream for live output
+	stream := tap.NewStream(tap.StreamOptions{ShowTimer: true})
+	stream.Start(message)
+
+	defer func() {
+		// Always stop the stream when function exits
+		stream.Stop(successMessage, 0)
+	}()
+
+	// Create hook executor with stream
+	hookExecutor := NewWithStream(stream)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	var err error
+	if hookType == "pre-generation" {
+		err = hookExecutor.ExecutePreGeneration(ctx, Hooks{PreGeneration: hookCommands}, workDir, data)
+	} else {
+		err = hookExecutor.ExecutePostGeneration(ctx, Hooks{PostGeneration: hookCommands}, workDir, data)
+	}
+
+	if err != nil {
+		stream.Stop("Hook execution failed", 2)
+		return err
+	}
+
+	return nil
 }
 
 // generateFiles renders the template tree with progress display

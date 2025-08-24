@@ -22,7 +22,7 @@ func NewResolver() *Resolver {
 func (r *Resolver) Resolve(src string) (string, func(), error) {
 	// Detect git-ish sources
 	if isGitLike(src) {
-		tmp, err := os.MkdirTemp("", "cutr-*")
+		tmp, err := os.MkdirTemp("", "kick-*")
 		if err != nil {
 			return "", nil, err
 		}

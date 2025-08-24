@@ -7,7 +7,7 @@ Set Height 800
 Set TypingSpeed 100ms
 
 Sleep 1s
-Type "cutr ./examples/go-cli-cobra ./demo-out"
+Type "kick ./examples/go-cli-cobra ./demo-out"
 Enter
 Sleep 2s
 
@@ -19,17 +19,17 @@ Enter
 Sleep 1.0s
 
 # 2) Go module name (change from default)
-Type "github.com/yarlson/stellar-cli"
+Type "github.com/kick-cli/stellar-cli"
 Enter
 Sleep 1.0s
 
 # 3) Author name (change from default)
-Type "yarlson"
+Type "Kick"
 Enter
 Sleep 1.0s
 
 # 4) Author email (change from default)
-Type "yar@yarlson.dev"
+Type "kick@example.org"
 Enter
 Sleep 1.0s
 

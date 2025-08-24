@@ -29,9 +29,9 @@ func TestRenderer_RenderTree(t *testing.T) {
 		{
 			name: "empty source directory",
 			setupFunc: func(t *testing.T) (string, string, map[string]any) {
-				srcRoot, err := os.MkdirTemp("", "cutr-src-*")
+				srcRoot, err := os.MkdirTemp("", "kick-src-*")
 				require.NoError(t, err)
-				outRoot, err := os.MkdirTemp("", "cutr-out-*")
+				outRoot, err := os.MkdirTemp("", "kick-out-*")
 				require.NoError(t, err)
 
 				data := map[string]any{
@@ -49,9 +49,9 @@ func TestRenderer_RenderTree(t *testing.T) {
 		{
 			name: "simple file rendering",
 			setupFunc: func(t *testing.T) (string, string, map[string]any) {
-				srcRoot, err := os.MkdirTemp("", "cutr-src-*")
+				srcRoot, err := os.MkdirTemp("", "kick-src-*")
 				require.NoError(t, err)
-				outRoot, err := os.MkdirTemp("", "cutr-out-*")
+				outRoot, err := os.MkdirTemp("", "kick-out-*")
 				require.NoError(t, err)
 
 				// Create a simple template file
@@ -75,9 +75,9 @@ func TestRenderer_RenderTree(t *testing.T) {
 		{
 			name: "directory structure rendering",
 			setupFunc: func(t *testing.T) (string, string, map[string]any) {
-				srcRoot, err := os.MkdirTemp("", "cutr-src-*")
+				srcRoot, err := os.MkdirTemp("", "kick-src-*")
 				require.NoError(t, err)
-				outRoot, err := os.MkdirTemp("", "cutr-out-*")
+				outRoot, err := os.MkdirTemp("", "kick-out-*")
 				require.NoError(t, err)
 
 				// Create nested directory structure
@@ -111,9 +111,9 @@ func TestRenderer_RenderTree(t *testing.T) {
 		{
 			name: "binary file copying",
 			setupFunc: func(t *testing.T) (string, string, map[string]any) {
-				srcRoot, err := os.MkdirTemp("", "cutr-src-*")
+				srcRoot, err := os.MkdirTemp("", "kick-src-*")
 				require.NoError(t, err)
-				outRoot, err := os.MkdirTemp("", "cutr-out-*")
+				outRoot, err := os.MkdirTemp("", "kick-out-*")
 				require.NoError(t, err)
 
 				// Create a binary-like file (with null bytes)
@@ -137,9 +137,9 @@ func TestRenderer_RenderTree(t *testing.T) {
 		{
 			name: "template functions usage",
 			setupFunc: func(t *testing.T) (string, string, map[string]any) {
-				srcRoot, err := os.MkdirTemp("", "cutr-src-*")
+				srcRoot, err := os.MkdirTemp("", "kick-src-*")
 				require.NoError(t, err)
-				outRoot, err := os.MkdirTemp("", "cutr-out-*")
+				outRoot, err := os.MkdirTemp("", "kick-out-*")
 				require.NoError(t, err)
 
 				// Create template using various functions
@@ -170,21 +170,21 @@ Trim: "spaced text"`
 			},
 		},
 		{
-			name: "skip git and cutr files",
+			name: "skip git and kick files",
 			setupFunc: func(t *testing.T) (string, string, map[string]any) {
-				srcRoot, err := os.MkdirTemp("", "cutr-src-*")
+				srcRoot, err := os.MkdirTemp("", "kick-src-*")
 				require.NoError(t, err)
-				outRoot, err := os.MkdirTemp("", "cutr-out-*")
+				outRoot, err := os.MkdirTemp("", "kick-out-*")
 				require.NoError(t, err)
 
-				// Create .git directory and cutr.yaml
+				// Create .git directory and kick.yaml
 				gitDir := filepath.Join(srcRoot, ".git")
 				err = os.MkdirAll(gitDir, 0755)
 				require.NoError(t, err)
 				err = os.WriteFile(filepath.Join(gitDir, "config"), []byte("git config"), 0644)
 				require.NoError(t, err)
 
-				err = os.WriteFile(filepath.Join(srcRoot, "cutr.yaml"), []byte(`name: "test"`), 0644)
+				err = os.WriteFile(filepath.Join(srcRoot, "kick.yaml"), []byte(`name: "test"`), 0644)
 				require.NoError(t, err)
 
 				// Create normal file
@@ -201,8 +201,8 @@ Trim: "spaced text"`
 				_, err := os.Stat(filepath.Join(outRoot, ".git"))
 				assert.Error(t, err)
 
-				// cutr.yaml should not exist
-				_, err = os.Stat(filepath.Join(outRoot, "cutr.yaml"))
+				// kick.yaml should not exist
+				_, err = os.Stat(filepath.Join(outRoot, "kick.yaml"))
 				assert.Error(t, err)
 
 				// Normal file should exist
@@ -216,7 +216,7 @@ Trim: "spaced text"`
 		{
 			name: "non-existent source directory",
 			setupFunc: func(t *testing.T) (string, string, map[string]any) {
-				outRoot, err := os.MkdirTemp("", "cutr-out-*")
+				outRoot, err := os.MkdirTemp("", "kick-out-*")
 				require.NoError(t, err)
 
 				data := map[string]any{
@@ -230,9 +230,9 @@ Trim: "spaced text"`
 		{
 			name: "template parsing error",
 			setupFunc: func(t *testing.T) (string, string, map[string]any) {
-				srcRoot, err := os.MkdirTemp("", "cutr-src-*")
+				srcRoot, err := os.MkdirTemp("", "kick-src-*")
 				require.NoError(t, err)
-				outRoot, err := os.MkdirTemp("", "cutr-out-*")
+				outRoot, err := os.MkdirTemp("", "kick-out-*")
 				require.NoError(t, err)
 
 				// Create file with invalid template syntax
@@ -251,9 +251,9 @@ Trim: "spaced text"`
 		{
 			name: "missing template variable",
 			setupFunc: func(t *testing.T) (string, string, map[string]any) {
-				srcRoot, err := os.MkdirTemp("", "cutr-src-*")
+				srcRoot, err := os.MkdirTemp("", "kick-src-*")
 				require.NoError(t, err)
-				outRoot, err := os.MkdirTemp("", "cutr-out-*")
+				outRoot, err := os.MkdirTemp("", "kick-out-*")
 				require.NoError(t, err)
 
 				// Create file referencing non-existent variable
@@ -272,7 +272,7 @@ Trim: "spaced text"`
 		{
 			name: "invalid output path",
 			setupFunc: func(t *testing.T) (string, string, map[string]any) {
-				srcRoot, err := os.MkdirTemp("", "cutr-src-*")
+				srcRoot, err := os.MkdirTemp("", "kick-src-*")
 				require.NoError(t, err)
 
 				// Create a simple file
@@ -332,11 +332,11 @@ func TestRenderer_RenderTree_EdgeCases(t *testing.T) {
 	renderer := NewRenderer()
 
 	t.Run("empty template path rendering", func(t *testing.T) {
-		srcRoot, err := os.MkdirTemp("", "cutr-src-*")
+		srcRoot, err := os.MkdirTemp("", "kick-src-*")
 		require.NoError(t, err)
 		defer func() { _ = os.RemoveAll(srcRoot) }()
 
-		outRoot, err := os.MkdirTemp("", "cutr-out-*")
+		outRoot, err := os.MkdirTemp("", "kick-out-*")
 		require.NoError(t, err)
 		defer func() { _ = os.RemoveAll(outRoot) }()
 
@@ -359,11 +359,11 @@ func TestRenderer_RenderTree_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("file permissions preservation", func(t *testing.T) {
-		srcRoot, err := os.MkdirTemp("", "cutr-src-*")
+		srcRoot, err := os.MkdirTemp("", "kick-src-*")
 		require.NoError(t, err)
 		defer func() { _ = os.RemoveAll(srcRoot) }()
 
-		outRoot, err := os.MkdirTemp("", "cutr-out-*")
+		outRoot, err := os.MkdirTemp("", "kick-out-*")
 		require.NoError(t, err)
 		defer func() { _ = os.RemoveAll(outRoot) }()
 
@@ -409,9 +409,9 @@ func TestRenderer_RenderTreeWithSettings(t *testing.T) {
 				IgnorePatterns: []string{"*.tmp", "temp_*"},
 			},
 			setupFunc: func(t *testing.T) (string, string, map[string]any) {
-				srcRoot, err := os.MkdirTemp("", "cutr-src-*")
+				srcRoot, err := os.MkdirTemp("", "kick-src-*")
 				require.NoError(t, err)
-				outRoot, err := os.MkdirTemp("", "cutr-out-*")
+				outRoot, err := os.MkdirTemp("", "kick-out-*")
 				require.NoError(t, err)
 
 				// Create files to ignore
@@ -446,9 +446,9 @@ func TestRenderer_RenderTreeWithSettings(t *testing.T) {
 				IgnorePatterns: []string{"node_modules", "*.log"},
 			},
 			setupFunc: func(t *testing.T) (string, string, map[string]any) {
-				srcRoot, err := os.MkdirTemp("", "cutr-src-*")
+				srcRoot, err := os.MkdirTemp("", "kick-src-*")
 				require.NoError(t, err)
-				outRoot, err := os.MkdirTemp("", "cutr-out-*")
+				outRoot, err := os.MkdirTemp("", "kick-out-*")
 				require.NoError(t, err)
 
 				// Create node_modules directory
@@ -488,9 +488,9 @@ func TestRenderer_RenderTreeWithSettings(t *testing.T) {
 				KeepPermissions: true,
 			},
 			setupFunc: func(t *testing.T) (string, string, map[string]any) {
-				srcRoot, err := os.MkdirTemp("", "cutr-src-*")
+				srcRoot, err := os.MkdirTemp("", "kick-src-*")
 				require.NoError(t, err)
-				outRoot, err := os.MkdirTemp("", "cutr-out-*")
+				outRoot, err := os.MkdirTemp("", "kick-out-*")
 				require.NoError(t, err)
 
 				// Create executable file
@@ -524,9 +524,9 @@ func TestRenderer_RenderTreeWithSettings(t *testing.T) {
 				KeepPermissions: false,
 			},
 			setupFunc: func(t *testing.T) (string, string, map[string]any) {
-				srcRoot, err := os.MkdirTemp("", "cutr-src-*")
+				srcRoot, err := os.MkdirTemp("", "kick-src-*")
 				require.NoError(t, err)
-				outRoot, err := os.MkdirTemp("", "cutr-out-*")
+				outRoot, err := os.MkdirTemp("", "kick-out-*")
 				require.NoError(t, err)
 
 				// Create executable file

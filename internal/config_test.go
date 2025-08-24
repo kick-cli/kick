@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseCutrYAML(t *testing.T) {
+func TestParseKickYAML(t *testing.T) {
 	tests := []struct {
 		name          string
 		input         string
@@ -328,7 +328,7 @@ variables:
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config, err := ParseCutrYAML([]byte(tt.input))
+			config, err := ParseKickYAML([]byte(tt.input))
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -534,7 +534,7 @@ variables:
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config, err := ParseCutrYAML([]byte(tt.input))
+			config, err := ParseKickYAML([]byte(tt.input))
 			require.NoError(t, err)
 
 			order := config.GetVariableOrder()

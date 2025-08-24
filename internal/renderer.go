@@ -163,7 +163,7 @@ func (r *Renderer) renderPath(rel string, data map[string]any) (string, error) {
 
 // shouldSkip determines if a file or directory should be skipped during rendering.
 func (r *Renderer) shouldSkip(basename string, _ bool) bool {
-	return basename == ".git" || basename == CutrYAML
+	return basename == ".git" || basename == KickYAML
 }
 
 // processFile handles copying binary files or rendering text files.

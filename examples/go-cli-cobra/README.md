@@ -131,4 +131,4 @@ This project is licensed under the {{.license}} License - see the [LICENSE](LICE
 
 ---
 
-*Generated with [cutr](https://github.com/yarlson/cutr)*
+*Generated with [kick](https://github.com/kick-cli/kick)*

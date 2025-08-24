@@ -1,6 +1,6 @@
-# cutr Examples
+# kick Examples
 
-This directory contains example templates that demonstrate various features of cutr.
+This directory contains example templates that demonstrate various features of kick.
 
 ## Available Templates
 
@@ -23,10 +23,10 @@ A comprehensive Go CLI application template using the Cobra framework.
 
 ```bash
 # Use the template to create a new project
-cutr examples/go-cli-cobra ./my-awesome-cli
+kick examples/go-cli-cobra ./my-awesome-cli
 
 # Or from a remote repository
-cutr gh://yarlson/cutr/examples/go-cli-cobra ./my-awesome-cli
+kick gh://kick-cli/kick/examples/go-cli-cobra ./my-awesome-cli
 ```
 
 **What you'll get:**
@@ -56,17 +56,17 @@ cutr gh://yarlson/cutr/examples/go-cli-cobra ./my-awesome-cli
 
 1. **Local usage:**
    ```bash
-   cutr examples/go-cli-cobra ./my-project
+   kick examples/go-cli-cobra ./my-project
    ```
 
 2. **Remote usage (when examples are in a Git repository):**
    ```bash
-   cutr gh://yarlson/cutr/examples/go-cli-cobra ./my-project
+   kick gh://kick-cli/kick/examples/go-cli-cobra ./my-project
    ```
 
 3. **Test the template without committing:**
    ```bash
-   cutr examples/go-cli-cobra /tmp/test-project
+   kick examples/go-cli-cobra /tmp/test-project
    cd /tmp/test-project
    go run . --help
    ```
@@ -75,7 +75,7 @@ cutr gh://yarlson/cutr/examples/go-cli-cobra ./my-awesome-cli
 
 Use these examples as inspiration for creating your own templates:
 
-1. Study the `cutr.yaml` configuration
+1. Study the `kick.yaml` configuration
 2. Look at how template variables are used throughout the files
 3. See how hooks automate setup tasks
 4. Notice how conditional content works with `{{- if .variable}}`
@@ -84,8 +84,8 @@ Use these examples as inspiration for creating your own templates:
 
 We welcome additional examples! Please ensure your template:
 
-1. Has a complete `cutr.yaml` with good variable validation
-2. Demonstrates useful cutr features (hooks, template settings, etc.)
+1. Has a complete `kick.yaml` with good variable validation
+2. Demonstrates useful kick features (hooks, template settings, etc.)
 3. Includes a README explaining what the template does
 4. Works end-to-end without manual intervention
 5. Follows Go and general best practices

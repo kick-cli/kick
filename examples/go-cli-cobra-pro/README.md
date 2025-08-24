@@ -25,7 +25,7 @@
 
 ```bash
 # Generate project
-cutr gh://yarlson/cutr/examples/go-cli-cobra-pro ./{{.project_name}}
+kick gh://kick-cli/kick/examples/go-cli-cobra-pro ./{{.project_name}}
 cd {{.project_name}}
 
 # Run

@@ -9,9 +9,9 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const CutrYAML = "cutr.yaml"
+const KickYAML = "kick.yaml"
 
-// Config represents the complete cutr template configuration
+// Config represents the complete kick template configuration
 type Config struct {
 	// Template metadata
 	Name        string `yaml:"name"`
@@ -57,8 +57,8 @@ type TemplateSettings struct {
 	KeepPermissions bool     `yaml:"keep_permissions,omitempty"`
 }
 
-// ParseCutrYAML parses a cutr.yaml configuration file
-func ParseCutrYAML(data []byte) (Config, error) {
+// ParseKickYAML parses a kick.yaml configuration file
+func ParseKickYAML(data []byte) (Config, error) {
 	var config Config
 
 	// First parse normally to get all the data

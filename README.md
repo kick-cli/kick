@@ -1,14 +1,10 @@
-# cutr
-
-<div align="center">
-  <img src="assets/mascot-small.png" alt="cutr mascot" width="200">
-</div>
+# kick
 
 **Fast, minimal project scaffolder for developers** – Point it at a template, answer prompts, get a working project.
 
-## Why cutr?
+## Why kick?
 
-Setting up new projects shouldn't involve copying boilerplate, hunting for templates, or manually replacing placeholder text. cutr solves this by:
+Setting up new projects shouldn't involve copying boilerplate, hunting for templates, or manually replacing placeholder text. kick solves this by:
 
 - **Zero configuration required** – Just run it on any template directory or Git repo
 - **Interactive prompts** – Guided setup with validation, defaults, and help text
@@ -21,26 +17,26 @@ Setting up new projects shouldn't involve copying boilerplate, hunting for templ
 - **Flexible sources**: Local directories, Git URLs (`https://`, `ssh://`, `gh://owner/repo`)
 - **Rich prompts**: String, choice, number, boolean with validation and defaults
 - **Template engine**: Go templates in file contents and paths (`{{.variable}}`)
-- **Hooks system**: Run commands before/after generation with access to variables
+- **Hooks system**: Run commands before/after generation with live output streaming
 - **Smart handling**: Binary files copied as-is, permissions preserved
 - **Safe by default**: Missing template variables cause failures (no silent errors)
-- **Clean output**: Skips `.git`, `cutr.yaml`, and configurable ignore patterns
+- **Clean output**: Skips `.git`, `kick.yaml`, and configurable ignore patterns
 
 ## Installation
 
 **Go install (recommended):**
 
 ```bash
-go install github.com/yarlson/cutr@latest
+go install github.com/kick-cli/kick@latest
 ```
 
 **From source:**
 
 ```bash
-git clone https://github.com/yarlson/cutr
-cd cutr
-go build -o cutr
-sudo mv cutr /usr/local/bin/  # optional: add to PATH
+git clone https://github.com/kick-cli/kick
+cd kick
+go build -o kick
+sudo mv kick /usr/local/bin/  # optional: add to PATH
 ```
 
 **Requirements:** Go 1.24+
@@ -48,34 +44,34 @@ sudo mv cutr /usr/local/bin/  # optional: add to PATH
 ## Usage
 
 ```bash
-cutr <template> [output_dir]
+kick <template> [output_dir]
 ```
 
 ### Basic Examples
 
 ```bash
 # Use a local template directory
-cutr ./my-template ./new-project
+kick ./my-template ./new-project
 
 # Clone and use a Git repository
-cutr https://github.com/user/template ./new-project
+kick https://github.com/user/template ./new-project
 
 # GitHub shorthand
-cutr gh://user/template ./new-project
+kick gh://user/template ./new-project
 
 # Output to current directory (default)
-cutr ./template
+kick ./template
 ```
 
 ### Interactive Flow
 
 <div>
-  <img src="assets/demo.gif" alt="Tap Demo" width="1400">
+  <img src="assets/demo.gif" alt="kick Demo" width="1400">
 </div>
 
 ## Template Configuration
 
-Templates use a `cutr.yaml` file to define variables, validation, and hooks:
+Templates use a `kick.yaml` file to define variables, validation, and hooks:
 
 ```yaml
 name: "my-template"
@@ -159,7 +155,7 @@ File/directory names:
 
 ## Template Sources
 
-cutr supports multiple template sources:
+kick supports multiple template sources:
 
 | Format           | Example                            | Description                 |
 | ---------------- | ---------------------------------- | --------------------------- |
@@ -174,7 +170,7 @@ The `examples/` directory contains ready-to-use templates:
 
 ```bash
 # Create a Go CLI application with Cobra
-cutr examples/go-cli-cobra ./my-cli
+kick examples/go-cli-cobra ./my-cli
 cd my-cli
 go run . --help
 ```
@@ -185,8 +181,8 @@ See [examples/README.md](examples/README.md) for detailed information about avai
 
 ```bash
 # Show usage
-cutr --help
-cutr -h
+kick --help
+kick -h
 
 # Get help during prompts
 # Press Ctrl+C to cancel at any time
@@ -194,7 +190,7 @@ cutr -h
 
 ## Development Status
 
-cutr is **production ready** with a stable API. It's actively maintained and used for scaffolding Go projects, web applications, and development tools.
+kick is **production ready** with a stable API. It's actively maintained and used for scaffolding Go projects, web applications, and development tools.
 
 **Roadmap:**
 

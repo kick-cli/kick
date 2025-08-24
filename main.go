@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/yarlson/cutr/internal"
+	"github.com/kick-cli/kick/internal"
 )
 
 func main() {
@@ -28,10 +28,10 @@ func main() {
 }
 
 func usage() {
-	_, _ = fmt.Fprintf(os.Stdout, `cutr – minimal Cookiecutter-like generator in Go
+	_, _ = fmt.Fprintf(os.Stdout, `kick – kickstart projects from templates
 
 Usage:
-  cutr <template> [output_dir]
+  kick <template> [output_dir]
 
 <template> can be:
   - local directory path
@@ -40,10 +40,10 @@ Usage:
 Template expects %s at the root with variables.
 
 Example:
-  cutr gh://my-org/service-template ./my-service
-  cutr /path/to/template ./out
+  kick gh://my-org/service-template ./my-service
+  kick /path/to/template ./out
 
-`, internal.CutrYAML)
+`, internal.KickYAML)
 }
 
 func hasHelpFlag(args []string) bool {

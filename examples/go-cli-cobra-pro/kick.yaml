@@ -1,7 +1,7 @@
 name: "go-cli-cobra-pro"
 description: "Production-grade Go CLI template with Cobra, tests, lint, release, CI"
 version: "1.0.0"
-repository: "https://github.com/yarlson/cutr"
+repository: "https://github.com/kick-cli/cutr"
 
 variables:
   project_name:

@@ -19,7 +19,7 @@ func TestNewResolver(t *testing.T) {
 
 func TestResolver_Resolve(t *testing.T) {
 	// Create test directories for local path testing
-	testDir, err := os.MkdirTemp("", "cutr-test-*")
+	testDir, err := os.MkdirTemp("", "kick-test-*")
 	require.NoError(t, err)
 	defer func() { _ = os.RemoveAll(testDir) }()
 
@@ -153,7 +153,7 @@ func TestResolver_Resolve(t *testing.T) {
 					cleanup()
 
 					// Verify path is cleaned up (for temp directories)
-					if strings.Contains(path, "cutr-") {
+					if strings.Contains(path, "kick-") {
 						_, err = os.Stat(path)
 						assert.Error(t, err, "Temporary path should be cleaned up")
 					}
@@ -234,7 +234,7 @@ func TestResolver_Resolve_ErrorScenarios(t *testing.T) {
 	t.Run("nil resolver method call", func(t *testing.T) {
 		// Test that the method handles basic cases properly
 		// This is more about ensuring the method signature works correctly
-		testDir, err := os.MkdirTemp("", "cutr-error-test-*")
+		testDir, err := os.MkdirTemp("", "kick-error-test-*")
 		require.NoError(t, err)
 		defer func() { _ = os.RemoveAll(testDir) }()
 

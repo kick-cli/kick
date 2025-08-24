@@ -105,7 +105,7 @@ func TestExecutor_ExecutePreGeneration(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create temporary work directory
-			workDir, err := os.MkdirTemp("", "cutr-hooks-*")
+			workDir, err := os.MkdirTemp("", "kick-hooks-*")
 			require.NoError(t, err)
 			defer func() { _ = os.RemoveAll(workDir) }()
 
@@ -199,7 +199,7 @@ func TestExecutor_ExecutePostGeneration(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create temporary work directory
-			workDir, err := os.MkdirTemp("", "cutr-hooks-*")
+			workDir, err := os.MkdirTemp("", "kick-hooks-*")
 			require.NoError(t, err)
 			defer func() { _ = os.RemoveAll(workDir) }()
 
@@ -253,7 +253,7 @@ func TestExecutor_ExecuteWithTimeout(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			workDir, err := os.MkdirTemp("", "cutr-timeout-*")
+			workDir, err := os.MkdirTemp("", "kick-timeout-*")
 			require.NoError(t, err)
 			defer func() { _ = os.RemoveAll(workDir) }()
 
@@ -278,7 +278,7 @@ func TestExecutor_ExecuteWithTimeout(t *testing.T) {
 
 func TestExecutor_ExecuteBothHooks(t *testing.T) {
 	t.Run("complete hook workflow", func(t *testing.T) {
-		workDir, err := os.MkdirTemp("", "cutr-workflow-*")
+		workDir, err := os.MkdirTemp("", "kick-workflow-*")
 		require.NoError(t, err)
 		defer func() { _ = os.RemoveAll(workDir) }()
 
@@ -325,7 +325,7 @@ func TestExecutor_ExecuteBothHooks(t *testing.T) {
 
 func TestExecutor_WithStreamingOutput(t *testing.T) {
 	t.Run("executor with stream executes hooks successfully", func(t *testing.T) {
-		workDir, err := os.MkdirTemp("", "cutr-stream-*")
+		workDir, err := os.MkdirTemp("", "kick-stream-*")
 		require.NoError(t, err)
 		defer func() { _ = os.RemoveAll(workDir) }()
 
@@ -359,7 +359,7 @@ func TestExecutor_WithStreamingOutput(t *testing.T) {
 	})
 
 	t.Run("executor with stream handles commands with mixed output", func(t *testing.T) {
-		workDir, err := os.MkdirTemp("", "cutr-stream-mixed-*")
+		workDir, err := os.MkdirTemp("", "kick-stream-mixed-*")
 		require.NoError(t, err)
 		defer func() { _ = os.RemoveAll(workDir) }()
 
@@ -393,7 +393,7 @@ func TestExecutor_WithStreamingOutput(t *testing.T) {
 	})
 
 	t.Run("executor without stream falls back to original behavior", func(t *testing.T) {
-		workDir, err := os.MkdirTemp("", "cutr-no-stream-*")
+		workDir, err := os.MkdirTemp("", "kick-no-stream-*")
 		require.NoError(t, err)
 		defer func() { _ = os.RemoveAll(workDir) }()
 
@@ -427,7 +427,7 @@ func TestExecutor_WithStreamingOutput(t *testing.T) {
 	})
 
 	t.Run("hook commands output only, no command logging", func(t *testing.T) {
-		workDir, err := os.MkdirTemp("", "cutr-output-only-*")
+		workDir, err := os.MkdirTemp("", "kick-output-only-*")
 		require.NoError(t, err)
 		defer func() { _ = os.RemoveAll(workDir) }()
 

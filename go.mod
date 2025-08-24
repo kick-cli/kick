@@ -1,4 +1,4 @@
-module github.com/yarlson/cutr
+module github.com/kick-cli/kick
 
 go 1.24
 

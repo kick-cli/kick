@@ -63,13 +63,13 @@ func Generate(opts Options) error {
 
 // loadConfig loads and parses the template configuration
 func loadConfig(templatePath string) (Config, error) {
-	cfgPath := filepath.Join(templatePath, CutrYAML)
+	cfgPath := filepath.Join(templatePath, KickYAML)
 	cfgData, err := os.ReadFile(cfgPath)
 	if err != nil {
 		return Config{}, fmt.Errorf("read %s: %v", cfgPath, err)
 	}
 
-	cfg, err := ParseCutrYAML(cfgData)
+	cfg, err := ParseKickYAML(cfgData)
 	if err != nil {
 		return Config{}, fmt.Errorf("parse config: %v", err)
 	}
